@@ -21,34 +21,84 @@ int PedSimulation::getTickCount() const
 {
 	return tickCounter;
 }
-void PedSimulation::simulateOneStep()
+void PedSimulation::simulateOneStep(int tick_mode)
 {
-	tickCounter++;
-	model.tick_omp();
-	window.paint();
-	if (maxSimulationSteps-- == 0)
+	if (tick_mode == 0)
 	{
-		QApplication::quit();
+		tickCounter++;
+		model.tick_serial();
+		window.paint();
+		if (maxSimulationSteps-- == 0)
+		{
+			QApplication::quit();
+		}
+	}
+	else if(tick_mode == 1)
+	{
+		tickCounter++;
+		model.tick_omp();
+		window.paint();
+		if (maxSimulationSteps-- == 0)
+		{
+			QApplication::quit();
+		}
+	}
+	else if(tick_mode == 2)
+	{
+		tickCounter++;
+		model.tick_threads();
+		window.paint();
+		if (maxSimulationSteps-- == 0)
+		{
+			QApplication::quit();
+		}
+	}
+	else
+	{
+		cout << "invalid tick_mode value detected." << endl;
 	}
 }
 
-void PedSimulation::runSimulationWithQt(int maxNumberOfStepsToSimulate)
+void PedSimulation::runSimulationWithQt(int maxNumberOfStepsToSimulate, int tick_mode)
 {
 	maxSimulationSteps = maxNumberOfStepsToSimulate;
 
 	//movetimer.setInterval(50); // Limits the simulation to 20 FPS (if one so whiches).
-	QObject::connect(&movetimer, SIGNAL(timeout()), this, SLOT(simulateOneStep()));
+	QObject::connect(&movetimer, SIGNAL(timeout()), this, SLOT(simulateOneStep(tick_mode)));
 	movetimer.start();
 }
 
-void PedSimulation::runSimulationWithoutQt(int maxNumberOfStepsToSimulate)
+void PedSimulation::runSimulationWithoutQt(int maxNumberOfStepsToSimulate, int tick_mode)
 {
-
 	maxSimulationSteps = maxNumberOfStepsToSimulate;
-	for (int i = 0; i < maxSimulationSteps; i++)
+
+	if (tick_mode == 0)
 	{
-		tickCounter++;
-		model.tick_omp();
+		for (int i = 0; i < maxSimulationSteps; i++)
+		{
+			tickCounter++;
+			model.tick_serial();
+		}
+	}
+	else if (tick_mode == 1)
+	{
+		for (int i = 0; i < maxSimulationSteps; i++)
+		{
+			tickCounter++;
+			model.tick_omp();
+		}
+	}
+	else if (tick_mode == 2)
+	{
+		for (int i = 0; i < maxSimulationSteps; i++)
+		{
+			tickCounter++;
+			model.tick_threds();
+		}	
+	}
+	else
+	{
+		cout << "invalid tick_mode value detected." << endl;
 	}
 }
 
