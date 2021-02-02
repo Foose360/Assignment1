@@ -141,7 +141,7 @@ int main(int argc, char*argv[]) {
 			// Simulation mode to use when visualizing
 			auto start = std::chrono::steady_clock::now();
 			mainwindow.show();
-			simulation.runSimulationWithQt(maxNumberOfStepsToSimulate);
+			simulation.runSimulationWithQt(maxNumberOfStepsToSimulate, tick_mode);
 			retval = app.exec();
 
 			auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::steady_clock::now() - start);

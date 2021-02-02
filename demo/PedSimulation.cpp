@@ -93,7 +93,7 @@ void PedSimulation::runSimulationWithoutQt(int maxNumberOfStepsToSimulate, int t
 		for (int i = 0; i < maxSimulationSteps; i++)
 		{
 			tickCounter++;
-			model.tick_threds();
+			model.tick_threads();
 		}	
 	}
 	else
