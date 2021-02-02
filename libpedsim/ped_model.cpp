@@ -78,7 +78,7 @@ static void tick_offset(int id, int step, std::vector<Ped::Tagent*> agents)
 void Ped::Model::tick_threads()
 {
 	int i;
-	int id = omp_get_thread_num();
+	int id = omp_get_num_threads();
 	int step = agents.size() / id;
 	agents = this->getAgents();
 	std::thread* t = new::std::thread[id];
