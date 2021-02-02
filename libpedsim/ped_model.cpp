@@ -79,10 +79,10 @@ void Ped::Model::tick_threads()
 {
 	int i;
 	int id = omp_get_num_threads();
-	int step = agents.size() / id;
 	agents = this->getAgents();
+	int step = agents.size() / id;
 	std::thread* t = new::std::thread[id];
-	for (i; i < id; i++) {
+	for (i = 0; i < id; i++) {
 		t[i] = std::thread(tick_offset, i, step, agents);
 	}
 	for (int k = 0; k < id; k++) {
