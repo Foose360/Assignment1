@@ -75,21 +75,17 @@ static void tick_offset(int id, int step, std::vector<Ped::Tagent*> agents)
 	}
 }
 
-void Ped::Model::tick_threads()
+void Ped::Model::tick_threads(int cores)
 {
-	#pragma omp parallel 
-	{
-		int i;
-		int id = omp_get_num_threads();
-		agents = this->getAgents();
-		int step = agents.size() / id;
-		std::thread* t = new::std::thread[id];
-		for (i = 0; i < id; i++) {
-			t[i] = std::thread(tick_offset, i, step, agents);
-		}
-		for (int k = 0; k < id; k++) {
-			t[k].join();
-		}
+	int i;
+	agents = this->getAgents();
+	int step = agents.size() / cores;
+	std::thread* t = new::std::thread[cores];
+	for (i = 0; i < cores; i++) {
+		t[i] = std::thread(tick_offset, i, step, agents);
+	}
+	for (int k = 0; k < cores; k++) {
+		t[k].join();
 	}
 }
 

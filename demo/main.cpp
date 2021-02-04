@@ -32,6 +32,7 @@
 int main(int argc, char*argv[]) {
 	bool timing_mode = 0;
 	int tick_mode = 0;
+	int cores = 1;
 	int i = 1;
 	QString scenefile = "scenario.xml";
 
@@ -57,6 +58,10 @@ int main(int argc, char*argv[]) {
 			else if (strcmp(&argv[i][2], "t") == 0) 
 			{
 				tick_mode = 2;
+				char *ptr;
+				long ret;
+				ret = strtol(argv[i+1], &ptr, 10);
+				cores = ret;
 			}
 			else
 			{
@@ -83,7 +88,7 @@ int main(int argc, char*argv[]) {
 		MainWindow mainwindow(model);
 
 		// Default number of steps to simulate. Feel free to change this.
-		const int maxNumberOfStepsToSimulate = 1000;
+		const int maxNumberOfStepsToSimulate = 10000;
 		
 				
 
@@ -103,7 +108,7 @@ int main(int argc, char*argv[]) {
 				// Simulation mode to use when profiling (without any GUI)
 				std::cout << "Running reference version...\n";
 				auto start = std::chrono::steady_clock::now();
-				simulation.runSimulationWithoutQt(maxNumberOfStepsToSimulate, tick_mode);
+				simulation.runSimulationWithoutQt(maxNumberOfStepsToSimulate, tick_mode, cores);
 				auto duration_seq = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::steady_clock::now() - start);
 				fps_seq = ((float)simulation.getTickCount()) / ((float)duration_seq.count())*1000.0;
 				cout << "Reference time: " << duration_seq.count() << " milliseconds, " << fps_seq << " Frames Per Second." << std::endl;
@@ -120,7 +125,7 @@ int main(int argc, char*argv[]) {
 				// Simulation mode to use when profiling (without any GUI)
 				std::cout << "Running target version...\n";
 				auto start = std::chrono::steady_clock::now();
-				simulation.runSimulationWithoutQt(maxNumberOfStepsToSimulate, tick_mode);
+				simulation.runSimulationWithoutQt(maxNumberOfStepsToSimulate, tick_mode, cores);
 				auto duration_target = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::steady_clock::now() - start);
 				fps_target = ((float)simulation.getTickCount()) / ((float)duration_target.count())*1000.0;
 				cout << "Target time: " << duration_target.count() << " milliseconds, " << fps_target << " Frames Per Second." << std::endl;
@@ -141,7 +146,7 @@ int main(int argc, char*argv[]) {
 			// Simulation mode to use when visualizing
 			auto start = std::chrono::steady_clock::now();
 			mainwindow.show();
-			simulation.runSimulationWithQt(maxNumberOfStepsToSimulate, tick_mode);
+			simulation.runSimulationWithQt(maxNumberOfStepsToSimulate, tick_mode, cores);
 			retval = app.exec();
 
 			auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::steady_clock::now() - start);

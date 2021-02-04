@@ -23,14 +23,14 @@ public:
     ~PedSimulation() {}
 
 	// Running simulation without GUI. Use for profiling.
-	void runSimulationWithoutQt(int maxNumberOfStepsToSimulate, int tick_mode);
+	void runSimulationWithoutQt(int maxNumberOfStepsToSimulate, int tick_mode, int cores);
 
 	// Running simulation with GUI. Use for visualization.
-	void runSimulationWithQt(int maxNumberOfStepsToSimulate, int tick_mode);
+	void runSimulationWithQt(int maxNumberOfStepsToSimulate, int tick_mode, int cores);
 	int getTickCount() const;
 	public slots:
 	// Performs one simulation step
-	void simulateOneStep(int tick_mode);
+	void simulateOneStep(int tick_mode, int cores);
 
 private:
 	Ped::Model &model;

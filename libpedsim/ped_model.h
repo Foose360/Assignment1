@@ -33,7 +33,7 @@ namespace Ped{
 		
 		// Coordinates a time step in the scenario: move all agents by one step (if applicable).
 		void tick_serial();
-		void tick_threads();
+		void tick_threads(int cores);
 		void tick_omp();
 
 		// Returns the agents of this scenario

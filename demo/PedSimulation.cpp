@@ -21,7 +21,7 @@ int PedSimulation::getTickCount() const
 {
 	return tickCounter;
 }
-void PedSimulation::simulateOneStep(int tick_mode)
+void PedSimulation::simulateOneStep(int tick_mode, int cores)
 {
 	if (tick_mode == 0)
 	{
@@ -46,7 +46,7 @@ void PedSimulation::simulateOneStep(int tick_mode)
 	else if(tick_mode == 2)
 	{
 		tickCounter++;
-		model.tick_threads();
+		model.tick_threads(cores);
 		window.paint();
 		if (maxSimulationSteps-- == 0)
 		{
@@ -59,16 +59,16 @@ void PedSimulation::simulateOneStep(int tick_mode)
 	}
 }
 
-void PedSimulation::runSimulationWithQt(int maxNumberOfStepsToSimulate, int tick_mode)
+void PedSimulation::runSimulationWithQt(int maxNumberOfStepsToSimulate, int tick_mode, int cores)
 {
 	maxSimulationSteps = maxNumberOfStepsToSimulate;
 
 	//movetimer.setInterval(50); // Limits the simulation to 20 FPS (if one so whiches).
-	QObject::connect(&movetimer, SIGNAL(timeout()), this, SLOT(simulateOneStep(tick_mode)));
+	QObject::connect(&movetimer, SIGNAL(timeout()), this, SLOT(simulateOneStep(tick_mode, cores)));
 	movetimer.start();
 }
 
-void PedSimulation::runSimulationWithoutQt(int maxNumberOfStepsToSimulate, int tick_mode)
+void PedSimulation::runSimulationWithoutQt(int maxNumberOfStepsToSimulate, int tick_mode, int cores)
 {
 	maxSimulationSteps = maxNumberOfStepsToSimulate;
 
@@ -93,7 +93,7 @@ void PedSimulation::runSimulationWithoutQt(int maxNumberOfStepsToSimulate, int t
 		for (int i = 0; i < maxSimulationSteps; i++)
 		{
 			tickCounter++;
-			model.tick_threads();
+			model.tick_threads(cores);
 		}	
 	}
 	else
