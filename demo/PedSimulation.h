@@ -18,11 +18,9 @@ class PedSimulation : public QObject{
 	Q_OBJECT
 
 public:
-	PedSimulation(Ped::Model &model, MainWindow &window, Ped::Vagent v);
+	PedSimulation(Ped::Model &model, MainWindow &window);
 	PedSimulation() = delete;
     ~PedSimulation() {}
-
-	Ped::Vagent vagents;
 
 	// Running simulation without GUI. Use for profiling.
 	void runSimulationWithoutQt(int maxNumberOfStepsToSimulate, int tick_mode, int cores);

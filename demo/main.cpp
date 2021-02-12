@@ -145,6 +145,8 @@ int main(int argc, char*argv[]) {
 		else
 		{
 
+			Ped::Vagent v(model);
+			model.addVagent(v);
 			PedSimulation simulation(model, mainwindow);
 
 			cout << "Demo setup complete, running ..." << endl;
