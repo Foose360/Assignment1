@@ -1,4 +1,4 @@
-//
+﻿//
 // pedsim - A microscopic pedestrian simulation system.
 // Copyright (c) 2003 - 2014 by Christian Gloor
 //
@@ -50,7 +50,7 @@ void Ped::Tagent::addWaypoint(Twaypoint* wp) {
 Ped::Twaypoint* Ped::Tagent::getNextDestinationVector(int TagentIndex) {
 	__m128 xVector, yVector, destinationVector, destinationX, destinationY, diffX, diffY, length, destinationR, 
 		nextDestination, agentReachedDestination, nullList, falseList;
-	nullList = (float* _mm_malloc(4 * sizeof(float), 16); //Ett f?rs?k att aligna data f?r r?tt storlekar
+	nullList = (float* _mm_malloc(4 * sizeof(float), 16); //Ett försök att aligna data för rätt storlekar
 	falseList = (float* _mm_malloc(4 * sizeof(float), 16);
 	length = (float* _mm_malloc(4 * sizeof(float), 16);
 	diffX = (float* _mm_malloc(4 * sizeof(float), 16);
@@ -63,17 +63,17 @@ Ped::Twaypoint* Ped::Tagent::getNextDestinationVector(int TagentIndex) {
 	nullList = [NULL, NULL, NULL, NULL]; //Fungerar detta?
 	falseList = [false, false, false, false];
 
-	nextDestination = _mm_load_ps(&nullList); //set these to NULL. Q: should it be the same size as the other objects? Find out what size they are.
-	agentReachedDestination = _mm_load_ps(&falseList); //set all elements in vector to false.
+	nextDestination = _mm_load_ps(&nullList); 
+	agentReachedDestination = _mm_load_ps(&falseList);
 
-	if (_mm_cmpneq_ps(destinationX, nullList) {
+	if (_mm_cmpneq_ps(destinationX, nullList) { // (destination != NULL) Nu jämför vi enbart med X-koordinat
 		diffX = _mm_sub_ps(destinationX, xVector);
 	    diffY = mm_sub_ps(destinationY, yVector);
 		length = _mm_sqrt_ps(_mm_add_ps((_mm_mul_ps(diffX, diffX), (_mm_mul_ps(diffY, diffY))))); //Fungerar detta?
 		agentReachedDestination = _mm_cmplt_ps(length, destinationR); //Returns __m128 single-precision pointer
 	}
 
-	if ((agentReachedDestination || destination == NULL) && !waypoints.empty()) { // Can we vectorize waypoints? Might have to
+	if ((agentReachedDestination || destination == NULL) && !waypoints.empty()) { // Vi kanske måste vektorisera waypoints för den här delen
 		// Case 1: agent has reached destination (or has no current destination);
 		// get next destination if available
 			waypoints.push_back(destination);
@@ -83,7 +83,8 @@ Ped::Twaypoint* Ped::Tagent::getNextDestinationVector(int TagentIndex) {
 	else {
 		// Case 2: agent has not yet reached destination, continue to move towards
 		// current destination
-		nextDestination = destination;
+		_mm_store_ps(&) //hm. Hur vill vi spara nextDestination?
+		//nextDestination = destination;
 	}
 }
 
