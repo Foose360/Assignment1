@@ -13,6 +13,8 @@
 #include "MainWindow.h"
 #include "ParseScenario.h"
 
+#include "vector_agents.h"
+
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QApplication>
@@ -104,6 +106,8 @@ int main(int argc, char*argv[]) {
 				Ped::Model model;
 				ParseScenario parser(scenefile);
 				model.setup(parser.getAgents(), parser.getWaypoints(), Ped::SEQ);
+				Ped::Vagent v(model);
+				model.addVagent(v);
 				PedSimulation simulation(model, mainwindow);
 				// Simulation mode to use when profiling (without any GUI)
 				std::cout << "Running reference version...\n";
@@ -121,7 +125,9 @@ int main(int argc, char*argv[]) {
 				Ped::Model model;
 				ParseScenario parser(scenefile);
 				model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test);
-				PedSimulation simulation(model, mainwindow);
+				Ped::Vagent v(model);
+				model.addVagent(v);
+				PedSimulation simulation(model, mainwindow, vagents);
 				// Simulation mode to use when profiling (without any GUI)
 				std::cout << "Running target version...\n";
 				auto start = std::chrono::steady_clock::now();

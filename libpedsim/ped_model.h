@@ -16,6 +16,7 @@
 #include <set>
 
 #include "ped_agent.h"
+#include "vector_agents.h"
 
 namespace Ped{
 	class Tagent;
@@ -49,6 +50,11 @@ namespace Ped{
 		// Returns the heatmap visualizing the density of agents
 		int const * const * getHeatmap() const { return blurred_heatmap; };
 		int getHeatmapSize() const;
+
+		Ped::Vagent vagents;
+
+		// Adds a Vagent to the model. // STUDENT MADE //
+		void addVagent(Ped::Vagent v) { vagents = v; }
 
 	private:
 
