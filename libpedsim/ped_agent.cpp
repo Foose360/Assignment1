@@ -11,6 +11,7 @@
 
 #include <stdlib.h>
 
+
 Ped::Tagent::Tagent(int posX, int posY) {
 	Ped::Tagent::init(posX, posY);
 }
@@ -44,6 +45,48 @@ void Ped::Tagent::computeNextDesiredPosition() {
 void Ped::Tagent::addWaypoint(Twaypoint* wp) {
 	waypoints.push_back(wp);
 }
+//getNextDestination with vectorization
+//Potential flaws: Memory size might not align properly?
+Ped::Twaypoint* Ped::Tagent::getNextDestinationVector(int TagentIndex) {
+	__m128 xVector, yVector, destinationVector, destinationX, destinationY, diffX, diffY, length, destinationR, 
+		nextDestination, agentReachedDestination, nullList, falseList;
+	nullList = (float* _mm_malloc(4 * sizeof(float), 16); //Ett f?rs?k att aligna data f?r r?tt storlekar
+	falseList = (float* _mm_malloc(4 * sizeof(float), 16);
+	length = (float* _mm_malloc(4 * sizeof(float), 16);
+	diffX = (float* _mm_malloc(4 * sizeof(float), 16);
+	diffY = (float* _mm_malloc(4 * sizeof(float), 16);
+	xVector = _mm_load_ps(&TagentPointers->x[TagentIndex]);
+	yVector = _mm_load_ps(&TagentPointers->y[TagentIndex]);
+	destinationX = _mm_load_ps(&TagentPointers->destinationX[TagentIndex]);
+	destinationY = _mm_load_ps(&TagentPointers->destinationY[TagentIndex]);
+	destinationR = _mm_load_ps(&TagentPointers->lastDestinationR[TagentIndex]);
+	nullList = [NULL, NULL, NULL, NULL]; //Fungerar detta?
+	falseList = [false, false, false, false];
+
+	nextDestination = _mm_load_ps(&nullList); //set these to NULL. Q: should it be the same size as the other objects? Find out what size they are.
+	agentReachedDestination = _mm_load_ps(&falseList); //set all elements in vector to false.
+
+	if (_mm_cmpneq_ps(destinationX, nullList) {
+		diffX = _mm_sub_ps(destinationX, xVector);
+	    diffY = mm_sub_ps(destinationY, yVector);
+		length = _mm_sqrt_ps(_mm_add_ps((_mm_mul_ps(diffX, diffX), (_mm_mul_ps(diffY, diffY))))); //Fungerar detta?
+		agentReachedDestination = _mm_cmplt_ps(length, destinationR); //Returns __m128 single-precision pointer
+	}
+
+	if ((agentReachedDestination || destination == NULL) && !waypoints.empty()) { // Can we vectorize waypoints? Might have to
+		// Case 1: agent has reached destination (or has no current destination);
+		// get next destination if available
+			waypoints.push_back(destination);
+			nextDestination = waypoints.front();
+			waypoints.pop_front();
+		}
+	else {
+		// Case 2: agent has not yet reached destination, continue to move towards
+		// current destination
+		nextDestination = destination;
+	}
+}
+
 
 Ped::Twaypoint* Ped::Tagent::getNextDestination() {
 	Ped::Twaypoint* nextDestination = NULL;
