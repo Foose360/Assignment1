@@ -13,11 +13,17 @@ namespace Ped {
 
         int *x; // pekare till int:s på rad.
         int *y; // pekare till int:s på rad.
+        double* destinationListX; //Alla destinationers x-koordinater.
+        double* destinationListY; //Alla destinationers y-koordinater.
+        double* destinationListR; //Alla destinationers radier.
+        size_t destinationSize; // storlek på destinationslistan
 
-        int *destinationId; // pekare till int:s på rad.
-        double *destinationX; // pekare till double:s på rad.
-        double *destinationY; // pekare till double:s på rad.
-        double *destinationR; // pekare till double:S på rad.
+
+        int* destinationPointer; // Pekare till agentens nuvarande position i destinationslistan
+        int *destinationId; // pekare till agentens lokala destinationid.
+        double *destinationX; // pekare till agentens lokala x-koordinat.
+        double *destinationY; // pekare till agentens lokala y-koordinat.
+        double *destinationR; // pekare till agentens lokala radie.
 
         int *LastdestinationId; // pekare till int:s på rad.
         double *LastdestinationX; // pekare till double:s på rad.
@@ -27,6 +33,7 @@ namespace Ped {
 	private:
 
         void init(Ped::Model mod);
+        std::vector<Twaypoint*> destinations;
 
 	};
 }

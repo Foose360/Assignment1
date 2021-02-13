@@ -73,9 +73,13 @@ Ped::Twaypoint* Ped::Tagent::getNextDestinationVector(int TagentIndex) {
 		agentReachedDestination = _mm_cmplt_ps(length, destinationR); //Returns __m128 single-precision pointer
 	}
 
-	if ((agentReachedDestination || destination == NULL) && !waypoints.empty()) { // Vi kanske måste vektorisera waypoints för den här delen
+	if ((agentReachedDestination || destination == NULL) && !waypoints.empty()) { // waypointsize == 0
 		// Case 1: agent has reached destination (or has no current destination);
 		// get next destination if available
+		    //ladda in waypoint-pekare | waypointPointer = _mm_load_ps(&Vagent->waypointPointer[TagentIndex]);
+            //har vi nått slutet på listan? sätt waypoint-pekare till 0, annars + 1
+		    //hämta nya waypoints med hjälp av pekaren
+	
 			waypoints.push_back(destination);
 			nextDestination = waypoints.front();
 			waypoints.pop_front();
@@ -101,9 +105,13 @@ Ped::Twaypoint* Ped::Tagent::getNextDestination() {
 		agentReachedDestination = length < destination->getr();
 	}
 
-	if ((agentReachedDestination || destination == NULL) && !waypoints.empty()) {
+	if ((agentReachedDestination || destination == NULL) && !waypoints.empty()) { //waypointsize == 0
 		// Case 1: agent has reached destination (or has no current destination);
 		// get next destination if available
+		//ladda pekare (destinationPointer)
+		//om vi nått slutet på listan, sätt alla till 0 -> annars incrementa med 1
+		//Ladda in rätta koordinater med hjälp av pekarna ifrån destination-listan (destinationListX / destinationListY / destinationListR)
+		//Uppdatera destinationX och Y koordinater för Vagentstrukten
 		waypoints.push_back(destination);
 		nextDestination = waypoints.front();
 		waypoints.pop_front();

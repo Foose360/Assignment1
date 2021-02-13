@@ -16,11 +16,17 @@ void Ped::Vagent::init(Ped::Model mod) {
 
     std::vector<Tagent*> agents = mod.getAgents();
     std:size_t s = agents.size();
+    std::vector<Twaypoint*> waypoints = mod.getDestinations();
+    destinationSize = waypoints.size();
+
+    double* destinationListX = (double*)_mm_malloc(destinationSize * sizeof(double), 16);
+    double* destinationListY = (double*)_mm_malloc(destinationSize * sizeof(double), 16);
+    double* destinationListR = (double*)_mm_malloc(destinationSize * sizeof(double), 16);
 
 	int *x = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
 	int *y = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
 
-    int* waypointIndex = (int*)_mm_malloc(s * sizeof(int), 16); // pekare till waypointindex
+    int *waypointPointer = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till waypointindex
 
 	int *destinationId = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
 	double *destinationX = (double *)_mm_malloc(s * sizeof(double), 16); // pekare till double:s på rad.
@@ -37,7 +43,7 @@ void Ped::Vagent::init(Ped::Model mod) {
     int *c1 = x;
     int *c2 = y;
 
-    int* c3 = 0;
+    int* c3 = waypointPointer;
 
     int *d1 = destinationId;
     double *d2 = destinationX;
@@ -49,12 +55,19 @@ void Ped::Vagent::init(Ped::Model mod) {
     double *d7 = LastdestinationY;
     double *d8 = LastdestinationR;
 
+    for (int i = 0; i < destinationSize; i++) {
+        destinationListX[i] = waypoints[i]->getx();
+        destinationListY[i] = waypoints[i]->gety();
+        destinationListR[i] = waypoints[i]->getr();
+    }
+
     for (int i = 0; i < s; i++) {
 		tmp = agents[i];
 
         // iterate all the values
         c1 = c1 + i;
         c2 = c2 + i;
+        c3 = c3 + i;
         d1 = d1 + i;
         d2 = d2 + i;
         d3 = d3 + i;
@@ -67,6 +80,7 @@ void Ped::Vagent::init(Ped::Model mod) {
         // set all the values
         *c1 = tmp->getX();
         *c2 = tmp->getY();
+        *c3 = 0;
         *d1 = NULL;
         *d2 = NULL;
         *d3 = NULL;

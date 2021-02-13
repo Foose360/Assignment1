@@ -39,6 +39,8 @@ namespace Ped{
 		// Returns the agents of this scenario
 		const std::vector<Tagent*> getAgents() const { return agents; };
 
+		const std::vector<Twaypoint*> getDestinations() const { return destinations; };
+
 		// Adds an agent to the tree structure
 		void placeAgent(const Ped::Tagent *a);
 
