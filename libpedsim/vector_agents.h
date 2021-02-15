@@ -13,7 +13,6 @@ namespace Ped {
 
         int *x; // pekare till int:s på rad.
         int *y; // pekare till int:s på rad.
-
         int *reachedDestination; 
         int *destinationId; // pekare till int:s på rad
         float *destinationX; // pekare till double:s på rad.
@@ -24,7 +23,6 @@ namespace Ped {
         float *LastdestinationX; // pekare till double:s på rad.
         float *LastdestinationY; // pekare till double:s på rad.
         float *LastdestinationR; // pekare till double:S på rad.
-
 
 	private:
 

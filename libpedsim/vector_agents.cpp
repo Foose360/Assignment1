@@ -4,7 +4,11 @@
 #include "ped_model.h"
 #include <math.h>
 #include <stdlib.h>
+<<<<<<< HEAD
 #include <emmintrin.h>
+=======
+
+>>>>>>> 2056aee134817ff0841816f893d4350766b1a4f1
 
 
 
@@ -36,7 +40,6 @@ void Ped::Vagent::init(Ped::Model mod) {
 
     int *c1 = x;
     int *c2 = y;
-
     int *b1 = reachedDestination;
     int *d1 = destinationId;
     float *d2 = destinationX;
@@ -64,7 +67,6 @@ void Ped::Vagent::init(Ped::Model mod) {
         d7 = d7 + 1;
         d8 = d8 + 1;
 
-
         // set all the values
         *b1 = 0;
         *c1 = tmp->getX();
@@ -77,6 +79,5 @@ void Ped::Vagent::init(Ped::Model mod) {
         *d6 = NULL;
         *d7 = NULL;
         *d8 = NULL;
-
     }
 }

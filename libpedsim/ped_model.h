@@ -16,6 +16,7 @@
 #include <set>
 
 #include "ped_agent.h"
+#include "vector_agents.h"
 
 namespace Ped{
 	class Tagent;

@@ -41,6 +41,7 @@ void Ped::Model::tick_omp()
 	int i;
 	Ped::Tagent* tmp;
 	agents = this->getAgents();
+	vagents = this->vagents;
 #pragma omp parallel for private(i, tmp)
 	for (i = 0; i < agents.size(); i+=4) {
 		tmp = agents[i];
