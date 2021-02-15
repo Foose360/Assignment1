@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <deque>
+#include <emmintrin.h>
 
 using namespace std;
 
@@ -65,6 +66,8 @@ namespace Ped {
 
 		// The last destination
 		Twaypoint* lastDestination;
+
+		void destinationReached();
 
 		// The queue of all destinations that this agent still has to visit
 		deque<Twaypoint*> waypoints;

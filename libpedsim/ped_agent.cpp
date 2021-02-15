@@ -8,7 +8,7 @@
 #include "ped_agent.h"
 #include "ped_waypoint.h"
 #include <math.h>
-
+#include <emmintrin.h>
 #include <stdlib.h>
 
 
@@ -27,100 +27,139 @@ void Ped::Tagent::init(int posX, int posY) {
 	lastDestination = NULL;
 }
 
-void Ped::Tagent::computeNextDesiredPosition() {
-	destination = getNextDestination();
-	if (destination == NULL) {
-		// no destination, no need to
+void Ped::Tagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> agents, Ped::Vagent *vagents, int i) {
+	__m128i _null, d_x, d_y, mask1, mask2;
+
+	_null = _mm_set1_epi32(NULL); //Oklart om funkar
+	_ones = _mm_set1_epi32(1); //TODO: 
+	d_x = _mm_load_si128(&vagents->destinationX + i); //destination x
+	d_y = _mm_load_si128(&vagents->destinationY + i); //destination y
+
+	//mask1 if dest_x == null
+	mask1 = _mm_cmpeq_epi32(d_x, _null); // m1 = |11..11|00..00|11..11|00..00| if statement true or false for all 32 bits
+	mask2 = _mm_cmpeq_epi32(d_y, _null); // m1 = |00..00|00..00|11..11|00..00|
+
+	mask1 = _mm_and_si128(mask1, mask2); // m1 = |11.11|00..00|11..11|00..00|
+
+		//int a = _mm_movemask_epi8 (mask1)
+
+	if (_mm_movemask_epi8(mask1) == _ones) {
+		// no destination, no need to if destination == NULL { return}
 		// compute where to move to
 		return;
 	}
 
-	double diffX = destination->getx() - x;
-	double diffY = destination->gety() - y;
-	double len = sqrt(diffX * diffX + diffY * diffY);
-	desiredPositionX = (int)round(x + diffX / len);
-	desiredPositionY = (int)round(y + diffY / len);
+	__m128i t_x, t_y, dest_id, ldest_id; //ints
+	__m128 d_r, t_a, t_b, ps_x, ps_y; //single floating point
+
+	t_x = _mm_load_si128(&vagents->x + i);
+	t_y = _mm_load_si128(&vagents->y + i);
+	d_x = _mm_sub_epi32(d_x, t_x); //d_x is now diffX = destinationx - x
+	d_y = _mm_sub_epi32(d_x, t_y); //same
+
+	ps_x = _mm_castsi128_ps(d_x);
+	ps_y = _mm_castsi128_ps(d_y);
+
+	t_a = _mm_mul_ps(ps_x, ps_x); //temporary a = diffX*diffX
+	t_b = _mm_mul_ps(ps_y, ps_y); //temporary b diffY*diffY
+
+	t_a = _mm_add_ps(t_a, t_b); // diffX*diffX - diffY*diffY
+
+	t_a = _mm_sqrt_ps(t_a); // len = sqrt(diffX*diffX - diffY*diffY)
+
+	ps_x = _mm_div_ps(ps_x, t_a); //second part of (int)round(x + diffX / len);
+	ps_y = _mm_div_ps(ps_y, t_a);
+
+	_mm_castps_si128(ps_x); //casts to int from float 
+	_mm_castps_si128(ps_y);
+
+	t_x = _mm_add_epi32(d_x, t_x); //t_x is now the new x
+	t_y = _mm_add_epi32(d_y, t_y); //t_y is now the new y
+
+
+	//|11.11|00..00|11..11|00..00|
+	t_x = _mm_and_si128(t_x, mask1);
+	t_y = _mm_and_si128(t_y, mask1);
+
+
+	_mm_store_si128(&vagents->destinationX + i, t_x);
+	_mm_store_si128(&vagents->destinationY + i, t_y);
+
+	for (k = 0; k < 4; k++) {
+		agents[i]->setX(&vagents->destinationX + i + k);
+		agents[i]->setY(&vagents->destinationY + i + k);
+	}
 }
 
 void Ped::Tagent::addWaypoint(Twaypoint* wp) {
 	waypoints.push_back(wp);
 }
-//getNextDestination with vectorization
-//Potential flaws: Memory size might not align properly?
-Ped::Twaypoint* Ped::Tagent::getNextDestinationVector(int TagentIndex) {
-	__m128 xVector, yVector, destinationVector, destinationX, destinationY, diffX, diffY, length, destinationR, 
-		nextDestination, agentReachedDestination, nullList, falseList;
-	nullList = (float* _mm_malloc(4 * sizeof(float), 16); //Ett försök att aligna data för rätt storlekar
-	falseList = (float* _mm_malloc(4 * sizeof(float), 16);
-	length = (float* _mm_malloc(4 * sizeof(float), 16);
-	diffX = (float* _mm_malloc(4 * sizeof(float), 16);
-	diffY = (float* _mm_malloc(4 * sizeof(float), 16);
-	xVector = _mm_load_ps(&TagentPointers->x[TagentIndex]);
-	yVector = _mm_load_ps(&TagentPointers->y[TagentIndex]);
-	destinationX = _mm_load_ps(&TagentPointers->destinationX[TagentIndex]);
-	destinationY = _mm_load_ps(&TagentPointers->destinationY[TagentIndex]);
-	destinationR = _mm_load_ps(&TagentPointers->lastDestinationR[TagentIndex]);
-	nullList = [NULL, NULL, NULL, NULL]; //Fungerar detta?
-	falseList = [false, false, false, false];
 
-	nextDestination = _mm_load_ps(&nullList); 
-	agentReachedDestination = _mm_load_ps(&falseList);
+void Ped::Tagent::destinationReached(Ped::Vagent* agents, int i) {
 
-	if (_mm_cmpneq_ps(destinationX, nullList) { // (destination != NULL) Nu jämför vi enbart med X-koordinat
-		diffX = _mm_sub_ps(destinationX, xVector);
-	    diffY = mm_sub_ps(destinationY, yVector);
-		length = _mm_sqrt_ps(_mm_add_ps((_mm_mul_ps(diffX, diffX), (_mm_mul_ps(diffY, diffY))))); //Fungerar detta?
-		agentReachedDestination = _mm_cmplt_ps(length, destinationR); //Returns __m128 single-precision pointer
-	}
+	__m128i _null, d_x, d_y, d_r, _reached, _x, _y, _len;
+	__m128 ps_x, ps_y, t_a, t_b;
+	// compute if agent reached its current destination
 
-	if ((agentReachedDestination || destination == NULL) && !waypoints.empty()) { // waypointsize == 0
-		// Case 1: agent has reached destination (or has no current destination);
-		// get next destination if available
-		    //ladda in waypoint-pekare | waypointPointer = _mm_load_ps(&Vagent->waypointPointer[TagentIndex]);
-            //har vi nått slutet på listan? sätt waypoint-pekare till 0, annars + 1
-		    //hämta nya waypoints med hjälp av pekaren
-	
-			waypoints.push_back(destination);
-			nextDestination = waypoints.front();
-			waypoints.pop_front();
-		}
-	else {
-		// Case 2: agent has not yet reached destination, continue to move towards
-		// current destination
-		_mm_store_ps(&) //hm. Hur vill vi spara nextDestination?
-		//nextDestination = destination;
-	}
+	d_x = _mm_load_si128(&vagents->destinationX + i); //destination x
+	d_y = _mm_load_si128(&vagents->destinationY + i); //destination y
+	d_r = _mm_load_si128(&vagents->destinationR + i); //destination r
+	_x = _mm_load_si128(&vagents->x + i);
+	_y = _mm_load_si128(&vagents->y + i);
+
+	d_x = _mm_sub_epi32(d_x, _x); //d_x is now diffX = destinationx - x
+	d_y = _mm_sub_epi32(d_x, _y); //same
+
+	ps_x = _mm_castsi128_ps(d_x); //float version of diffx and diffy
+	ps_y = _mm_castsi128_ps(d_y);
+
+	t_a = _mm_mul_ps(ps_x, ps_x); //temporary a = diffX * diffX
+	t_b = _mm_mul_ps(ps_y, ps_y); //temporary b = diffY * diffY
+
+	t_a = _mm_add_ps(t_a, t_b); // diffX*diffX + diffY*diffY
+
+	t_a = _mm_sqrt_ps(t_a); // len = sqrt(diffX*diffX - diffY*diffY)
+
+	_len = _mm_castps_si128(t_a); //cast to int
+
+	_reached = _mm_cmpgt_epi32(d_r, _len); //mask telling if agent
+	_mm_store_si128(&vagents->reachedDestination + i, _reached);
 }
 
 
-Ped::Twaypoint* Ped::Tagent::getNextDestination() {
+void Ped::Tagent::getNextDestination(Ped::Vagent* agents, int i) {
 	Ped::Twaypoint* nextDestination = NULL;
-	bool agentReachedDestination = false;
-
-	if (destination != NULL) {
-		// compute if agent reached its current destination
-		double diffX = destination->getx() - x;
-		double diffY = destination->gety() - y;
-		double length = sqrt(diffX * diffX + diffY * diffY);
-		agentReachedDestination = length < destination->getr();
+	int k = i + 4;
+	int newi = i;
+	for (newi; newi < k; newi++) {
+		int agentReachedDestination = agents->destinationReached + newi;
+		bool check;
+		if (agentReachedDestination > 0) {
+		check = true;
+	    }
+		else {
+			check = false;
+		}
+		if ((check || (agents->destinationX + newi) == NULL) && !waypoints.empty()) { //waypointsize == 0
+			// Case 1: agent has reached destination (or has no current destination);
+			// get next destination if available
+			waypoints.push_back(destination);
+			nextDestination = waypoints.front();
+			waypoints.pop_front();
+			agents->destinationX + newi = nextDestination->getx();
+			agents->destinationY + newi = nextDestination->gety();
+			agents->destinationR + newi = nextDestination->getr();
+			agents->destinationID + newi = nextDestination->getid();
+			//uppdatera pekarvärde!
+		}
+		else {
+			// Case 2: agent has not yet reached destination, continue to move towards
+			// current destination
+			agents->destinationX + newi = nextDestination->getx();
+			agents->destinationY + newi = nextDestination->gety();
+			agents->destinationR + newi = nextDestination->getr();
+			agents->destinationID + newi = nextDestination->getid();
+			//nextDestination = destination;
+		}
 	}
-
-	if ((agentReachedDestination || destination == NULL) && !waypoints.empty()) { //waypointsize == 0
-		// Case 1: agent has reached destination (or has no current destination);
-		// get next destination if available
-		//ladda pekare (destinationPointer)
-		//om vi nått slutet på listan, sätt alla till 0 -> annars incrementa med 1
-		//Ladda in rätta koordinater med hjälp av pekarna ifrån destination-listan (destinationListX / destinationListY / destinationListR)
-		//Uppdatera destinationX och Y koordinater för Vagentstrukten
-		waypoints.push_back(destination);
-		nextDestination = waypoints.front();
-		waypoints.pop_front();
-	}
-	else {
-		// Case 2: agent has not yet reached destination, continue to move towards
-		// current destination
-		nextDestination = destination;
-	}
-
-	return nextDestination;
 }

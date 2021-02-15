@@ -35,19 +35,19 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 	setupHeatmapSeq();
 }
 
+
 void Ped::Model::tick_omp()
 {
 	int i;
 	Ped::Tagent* tmp;
 	agents = this->getAgents();
 #pragma omp parallel for private(i, tmp)
-	for (i = 0; i < agents.size(); i++) {
+	for (i = 0; i < agents.size(); i+=4) {
 		tmp = agents[i];
-		tmp->computeNextDesiredPosition();
-		tmp->setX(tmp->getDesiredX());
-		tmp->setY(tmp->getDesiredY());
+		tmp->destinationReached(vagents, i);
+		tmp->getNextDestination(vagents, i);
+		tmp->computeNextDesiredPosition(agents, vagents, i);
 	}
-	// EDIT HERE FOR ASSIGNMENT 1
 }
 
 void Ped::Model::tick_serial()
@@ -55,11 +55,11 @@ void Ped::Model::tick_serial()
 	int i;
 	Ped::Tagent* tmp;
 	agents = this->getAgents();
-	for (i = 0; i < agents.size(); i++) {
+	for (i = 0; i < agents.size(); i+=4) {
 		tmp = agents[i];
-		tmp->computeNextDesiredPosition();
-		tmp->setX(tmp->getDesiredX());
-		tmp->setY(tmp->getDesiredY());
+		tmp->destinationReached(vagents, i);
+		tmp->getNextDestination(vagents, i);
+		tmp->computeNextDesiredPosition(agents, vagents, i);
 	}
 }
 
@@ -67,11 +67,11 @@ static void tick_offset(int id, int step, std::vector<Ped::Tagent*> agents)
 {
 	Ped::Tagent* tmp;
 	int offset = id * step;
-	for (int i = offset; i < offset + step; i++) {
+	for (int i = offset; i < offset + step; i+=4) {
 		tmp = agents[i];
-		tmp->computeNextDesiredPosition();
-		tmp->setX(tmp->getDesiredX());
-		tmp->setY(tmp->getDesiredY());
+		tmp->destinationReached(vagents, i);
+		tmp->getNextDestination(vagents, i);
+		tmp->computeNextDesiredPosition(agents, vagents, i);
 	}
 }
 
@@ -87,40 +87,6 @@ void Ped::Model::tick_threads(int cores)
 	for (int k = 0; k < cores; k++) {
 		t[k].join();
 	}
-}
-
-Ped::Twaypoint* Ped::Model::nextDestination(std::vector<Ped::Tagent*> agents) {
-	//pseudokod
-	__m128 diffY, diffX, desiredPositionX, desiredPositionY, len;
-	destination = _mm_load_ps(&agents->getNextDestination); //getnext är också seg och det här fungerar inte
-	for (int i = 0; i < 4; i++) {
-		if (any destination == NULL) { //destination ges av getNextDestination som i sin tur får den av waypoints
-			return
-		}
-		/*
-		ex:
-
-	    diffX = _mm_sub_ps(destination->getX(), x);
-		diffY = _mm_sub_ps(destination->getY(), y);
-		len[i] = sqrt(_mm_add_ps(_mm__mul_ps(diffX[i],diffX[i]),(_mm_mul_ps(diffY[i],diffY[i])) = sqrt(diffX * diffX + diffY * diffY);
-
-		desiredPositionX[i] = (int)round(_mm_div_ps((_mm_add_ps(x[i],diffX[i]), len[i]));
-		desiredPositionY[i] = (int)round(_mm_div_ps((_mm_add_ps(y[i],diffY[i]), len[i]));
-		*/
-	}
-	//räkna ut destination av x, y
-	//längd av flyttning
-	//..
-}
-//SSE 4.2
-//TODO: Strukturera data för SIMD
-void Ped::Model::tick_Simd() {
-	agents = this->getAgents();
-	for (i = 0; i < agents.size(); i+=4) {
-		    struct->computeNextDesiredPositionVector(i);
-			struct->setXVector(i);
-			struct->setYVector(i);
-		}
 }
 
 ////////////

@@ -4,7 +4,7 @@
 #include "ped_model.h"
 #include <math.h>
 #include <stdlib.h>
-
+#include <emmintrin.h>
 
 
 
@@ -20,37 +20,39 @@ void Ped::Vagent::init(Ped::Model mod) {
 	int *x = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
 	int *y = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
 
+    int *reachedDestination = (bool *)_mm_malloc(s * sizeof(bool), 16);
 	int *destinationId = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
-	double *destinationX = (double *)_mm_malloc(s * sizeof(double), 16); // pekare till double:s på rad.
-	double *destinationY = (double *)_mm_malloc(s * sizeof(double), 16); // pekare till double:s på rad.
-	double *destinationR = (double *)_mm_malloc(s * sizeof(double), 16); // pekare till double:S på rad.
+	float *destinationX = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
+	float *destinationY = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
+	float *destinationR = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:S på rad.
 
 	int *LastdestinationId = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
-	double *LastdestinationX = (double *)_mm_malloc(s * sizeof(double), 16); // pekare till double:s på rad.
-	double *LastdestinationY = (double *)_mm_malloc(s * sizeof(double), 16); // pekare till double:s på rad.
-	double *LastdestinationR = (double *)_mm_malloc(s * sizeof(double), 16); // pekare till double:S på rad.
+	float *LastdestinationX = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
+	float *LastdestinationY = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
+	float *LastdestinationR = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:S på rad.
 
-    deque<Twaypoint*> *wp = (deque<Twaypoint*> *)_mm_malloc(s * sizeof(deque<Twaypoint*> *), 16);
 
     Ped::Tagent* tmp;
 
     int *c1 = x;
     int *c2 = y;
 
+    int *b1 = reachedDestination;
     int *d1 = destinationId;
-    double *d2 = destinationX;
-    double *d3 = destinationY;
-    double *d4 = destinationR;
+    float *d2 = destinationX;
+    float *d3 = destinationY;
+    float *d4 = destinationR;
 
     int *d5 = LastdestinationId;
-    double *d6 = LastdestinationX;
-    double *d7 = LastdestinationY;
-    double *d8 = LastdestinationR;
+    float *d6 = LastdestinationX;
+    float *d7 = LastdestinationY;
+    float *d8 = LastdestinationR;
 
     for (int i = 0; i < s; i++) {
 		tmp = agents[i];
 
         // iterate all the values
+        b1 = b1 + 1;
         c1 = c1 + 1;
         c2 = c2 + 1;
         d1 = d1 + 1;
@@ -62,9 +64,9 @@ void Ped::Vagent::init(Ped::Model mod) {
         d7 = d7 + 1;
         d8 = d8 + 1;
 
-        wp = wp + 1;
 
         // set all the values
+        *b1 = 0;
         *c1 = tmp->getX();
         *c2 = tmp->getY();
         *d1 = tmp->getDest()->getid();
@@ -75,8 +77,6 @@ void Ped::Vagent::init(Ped::Model mod) {
         *d6 = NULL;
         *d7 = NULL;
         *d8 = NULL;
-
-        wp = tmp->getWaypointsPointer();
 
     }
 }

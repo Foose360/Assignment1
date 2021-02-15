@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <deque>
-
+#include <emmintrin.h>
 using namespace std;
 
 namespace Ped {
@@ -14,17 +14,17 @@ namespace Ped {
         int *x; // pekare till int:s på rad.
         int *y; // pekare till int:s på rad.
 
-        int *destinationId; // pekare till int:s på rad.
-        double *destinationX; // pekare till double:s på rad.
-        double *destinationY; // pekare till double:s på rad.
-        double *destinationR; // pekare till double:S på rad.
+        int *reachedDestination; 
+        int *destinationId; // pekare till int:s på rad
+        float *destinationX; // pekare till double:s på rad.
+        float *destinationY; // pekare till double:s på rad.
+        float *destinationR; // pekare till double:S på rad.
 
         int *LastdestinationId; // pekare till int:s på rad.
-        double *LastdestinationX; // pekare till double:s på rad.
-        double *LastdestinationY; // pekare till double:s på rad.
-        double *LastdestinationR; // pekare till double:S på rad.
+        float *LastdestinationX; // pekare till double:s på rad.
+        float *LastdestinationY; // pekare till double:s på rad.
+        float *LastdestinationR; // pekare till double:S på rad.
 
-        deque<Twaypoint*>* *wp; // pekare till waypoints.
 
 	private:
 
