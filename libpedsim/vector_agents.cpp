@@ -63,10 +63,10 @@ void Ped::Vagent::init(Ped::Model mod) {
         // set all the values
         *c1 = tmp->getX();
         *c2 = tmp->getY();
-        *d1 = NULL;
-        *d2 = NULL;
-        *d3 = NULL;
-        *d4 = NULL;
+        *d1 = tmp->getDest()->getid();
+        *d2 = tmp->getDest()->getx();
+        *d3 = tmp->getDest()->gety();
+        *d4 = tmp->getDest()->getr();
         *d5 = NULL;
         *d6 = NULL;
         *d7 = NULL;

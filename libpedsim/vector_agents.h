@@ -27,7 +27,6 @@ namespace Ped {
 	private:
 
         void init(Ped::Model mod);
-
 	};
 }
 
