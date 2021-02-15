@@ -4,11 +4,9 @@
 #include "ped_model.h"
 #include <math.h>
 #include <stdlib.h>
-<<<<<<< HEAD
 #include <emmintrin.h>
-=======
 
->>>>>>> 2056aee134817ff0841816f893d4350766b1a4f1
+
 
 
 
