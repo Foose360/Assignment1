@@ -9,7 +9,11 @@ using namespace std;
 namespace Ped {
 	class Vagent {
 	public:
-		Vagent(Ped::Model mod);
+	Vagent(Ped::Model mod);
+
+        ///////////////////////////////////////////////////////////
+        /// Attributes
+        ///////////////////////////////////////////////////////////
 
         int *x; // pekare till int:s på rad.
         int *y; // pekare till int:s på rad.
@@ -24,9 +28,22 @@ namespace Ped {
         float *LastdestinationY; // pekare till double:s på rad.
         float *LastdestinationR; // pekare till double:S på rad.
 
+        ///////////////////////////////////////////////////////////
+        /// Methods
+        ///////////////////////////////////////////////////////////
+
+        // Update the position according to get closer
+	// to the current destination
+	void computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, int i);
+
+	void destinationReached(int i);
+
+        void getNextDestination(std::vector<Ped::Tagent*> tagents, int i);
+
 	private:
 
         void init(Ped::Model mod);
+
 	};
 }
 

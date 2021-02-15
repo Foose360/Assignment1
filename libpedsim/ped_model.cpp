@@ -41,13 +41,11 @@ void Ped::Model::tick_omp()
 	int i;
 	Ped::Tagent* tmp;
 	agents = this->getAgents();
-	vagents = this->vagents;
 #pragma omp parallel for private(i, tmp)
 	for (i = 0; i < agents.size(); i+=4) {
-		tmp = agents[i];
-		tmp->destinationReached(vagents, i);
-		tmp->getNextDestination(vagents, i);
-		tmp->computeNextDesiredPosition(agents, vagents, i);
+		this->vagents->destinationReached(i);
+		this->vagents->getNextDestination(agents, i);
+		this->vagents->computeNextDesiredPosition(agents, i);
 	}
 }
 
@@ -57,22 +55,20 @@ void Ped::Model::tick_serial()
 	Ped::Tagent* tmp;
 	agents = this->getAgents();
 	for (i = 0; i < agents.size(); i+=4) {
-		tmp = agents[i];
-		tmp->destinationReached(vagents, i);
-		tmp->getNextDestination(vagents, i);
-		tmp->computeNextDesiredPosition(agents, vagents, i);
+		this->vagents->destinationReached(i);
+		this->vagents->getNextDestination(agents, i);
+		this->vagents->computeNextDesiredPosition(agents, i);
 	}
 }
 
-static void tick_offset(int id, int step, std::vector<Ped::Tagent*> agents)
+static void tick_offset(int id, int step, std::vector<Ped::Tagent*> agents, Ped::Vagent *vagents)
 {
 	Ped::Tagent* tmp;
 	int offset = id * step;
 	for (int i = offset; i < offset + step; i+=4) {
-		tmp = agents[i];
-		tmp->destinationReached(vagents, i);
-		tmp->getNextDestination(vagents, i);
-		tmp->computeNextDesiredPosition(agents, vagents, i);
+		vagents->destinationReached(i);
+		vagents->getNextDestination(agents, i);
+		vagents->computeNextDesiredPosition(agents, i);
 	}
 }
 
@@ -83,7 +79,7 @@ void Ped::Model::tick_threads(int cores)
 	int step = agents.size() / cores;
 	std::thread* t = new::std::thread[cores];
 	for (i = 0; i < cores; i++) {
-		t[i] = std::thread(tick_offset, i, step, agents);
+		t[i] = std::thread(tick_offset, i, step, agents, this->vagents);
 	}
 	for (int k = 0; k < cores; k++) {
 		t[k].join();

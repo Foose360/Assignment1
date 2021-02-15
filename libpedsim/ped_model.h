@@ -53,10 +53,10 @@ namespace Ped{
 		int const * const * getHeatmap() const { return blurred_heatmap; };
 		int getHeatmapSize() const;
 
-		Ped::Vagent vagents;
+		Ped::Vagent *vagents;
 
 		// Adds a Vagent to the model. // STUDENT MADE //
-		void addVagent(Ped::Vagent v) { vagents = v; }
+		void addVagent(Ped::Vagent *v) { vagents = v; }
 
 	private:
 

@@ -18,7 +18,6 @@
 
 #include <vector>
 #include <deque>
-#include <emmintrin.h>
 
 using namespace std;
 
@@ -34,7 +33,6 @@ namespace Ped {
 		int getDesiredX() const { return desiredPositionX; }
 		int getDesiredY() const { return desiredPositionY; }
 
-
 		// Sets the agent's position
 		void setX(int newX) { x = newX; }
 		void setY(int newY) { y = newY; }
@@ -48,12 +46,13 @@ namespace Ped {
 		int getY() const { return y; };
 
 		// Adds a new waypoint to reach for this agent
-		void addWaypoint(Twaypoint* wp);
+		void addWaypoint(Twaypoint* wp);  
 
-		// get detstination coordinates
+        // get destination coordinates
 		Twaypoint* getDest() const { return destination; };
 
-		deque<Twaypoint*>* getWaypointsPointer() { return &waypoints; };
+        // get waypoints deque
+		deque<Twaypoint*> getWaypoints() { return waypoints; }; 
 
 	private:
 		Tagent() {};
@@ -71,8 +70,6 @@ namespace Ped {
 
 		// The last destination
 		Twaypoint* lastDestination;
-
-		void destinationReached();
 
 		// The queue of all destinations that this agent still has to visit
 		deque<Twaypoint*> waypoints;
