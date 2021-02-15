@@ -30,6 +30,8 @@ void Ped::Vagent::init(Ped::Model mod) {
 	double *LastdestinationY = (double *)_mm_malloc(s * sizeof(double), 16); // pekare till double:s på rad.
 	double *LastdestinationR = (double *)_mm_malloc(s * sizeof(double), 16); // pekare till double:S på rad.
 
+    deque<Twaypoint*> *wp = (deque<Twaypoint*> *)_mm_malloc(s * sizeof(deque<Twaypoint*> *), 16);
+
     Ped::Tagent* tmp;
 
     int *c1 = x;
@@ -49,16 +51,18 @@ void Ped::Vagent::init(Ped::Model mod) {
 		tmp = agents[i];
 
         // iterate all the values
-        c1 = c1 + i;
-        c2 = c2 + i;
-        d1 = d1 + i;
-        d2 = d2 + i;
-        d3 = d3 + i;
-        d4 = d4 + i;
-        d5 = d5 + i;
-        d6 = d6 + i;
-        d7 = d7 + i;
-        d8 = d8 + i;
+        c1 = c1 + 1;
+        c2 = c2 + 1;
+        d1 = d1 + 1;
+        d2 = d2 + 1;
+        d3 = d3 + 1;
+        d4 = d4 + 1;
+        d5 = d5 + 1;
+        d6 = d6 + 1;
+        d7 = d7 + 1;
+        d8 = d8 + 1;
+
+        wp = wp + 1;
 
         // set all the values
         *c1 = tmp->getX();
@@ -71,6 +75,8 @@ void Ped::Vagent::init(Ped::Model mod) {
         *d6 = NULL;
         *d7 = NULL;
         *d8 = NULL;
+
+        wp = tmp->getWaypointsPointer();
 
     }
 }

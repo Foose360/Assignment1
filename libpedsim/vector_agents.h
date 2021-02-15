@@ -24,6 +24,8 @@ namespace Ped {
         double *LastdestinationY; // pekare till double:s på rad.
         double *LastdestinationR; // pekare till double:S på rad.
 
+        deque<Twaypoint*>* *wp; // pekare till waypoints.
+
 	private:
 
         void init(Ped::Model mod);

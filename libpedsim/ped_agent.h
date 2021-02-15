@@ -49,7 +49,9 @@ namespace Ped {
 		void addWaypoint(Twaypoint* wp);
 
 		// get detstination coordinates
-		Twaypoint* getDest() const { return destination }
+		Twaypoint* getDest() const { return destination; };
+
+		deque<Twaypoint*>* getWaypointsPointer() { return &waypoints; };
 
 	private:
 		Tagent() {};
