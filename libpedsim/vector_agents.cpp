@@ -56,8 +56,6 @@ void Ped::Vagent::init(std::vector<Ped::Tagent*> agents) {
         d7[i] = 0;
         d8[i] = 0;
 
-        cout << 'i = ' << i << ' x = ' << *c1 << endl;
-
     }
 }
 
