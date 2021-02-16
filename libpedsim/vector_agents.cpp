@@ -5,23 +5,25 @@
 #include <stdlib.h>
 #include <emmintrin.h>
 
+#include <iostream>
+
 void Ped::Vagent::init(std::vector<Ped::Tagent*> agents) {
 
     std:size_t s = agents.size();
 
-	int *x = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
-	int *y = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
+	x = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
+	y = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
 
-    int *reachedDestination = (int *)_mm_malloc(s * sizeof(int), 16);
-	int *destinationId = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
-	float *destinationX = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
-	float *destinationY = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
-	float *destinationR = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:S på rad.
+    reachedDestination = (int *)_mm_malloc(s * sizeof(int), 16);
+	destinationId = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
+	destinationX = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
+	destinationY = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
+	destinationR = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:S på rad.
 
-	int *LastdestinationId = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
-	float *LastdestinationX = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
-	float *LastdestinationY = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
-	float *LastdestinationR = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:S på rad.
+	LastdestinationId = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
+	LastdestinationX = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
+	LastdestinationY = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
+	LastdestinationR = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:S på rad.
 
     Ped::Tagent* tmp;
 
@@ -42,30 +44,19 @@ void Ped::Vagent::init(std::vector<Ped::Tagent*> agents) {
 		tmp = agents[i];
 
         // set all the values
-        *b1 = 0;
-        *c1 = tmp->getX();
-        *c2 = tmp->getY();
-        *d1 = 0;
-        *d2 = 0;
-        *d3 = 0;
-        *d4 = 0;
-        *d5 = 0;
-        *d6 = 0;
-        *d7 = 0;
-        *d8 = 0;
+        b1[i] = 0;
+        c1[i] = tmp->getX();
+        c2[i] = tmp->getY();
+        d1[i] = 0;
+        d2[i] = 0;
+        d3[i] = 0;
+        d4[i] = 0;
+        d5[i] = 0;
+        d6[i] = 0;
+        d7[i] = 0;
+        d8[i] = 0;
 
-        // iterate all the values
-        b1 = b1 + 1;
-        c1 = c1 + 1;
-        c2 = c2 + 1;
-        d1 = d1 + 1;
-        d2 = d2 + 1;
-        d3 = d3 + 1;
-        d4 = d4 + 1;
-        d5 = d5 + 1;
-        d6 = d6 + 1;
-        d7 = d7 + 1;
-        d8 = d8 + 1;
+        cout << 'i = ' << i << ' x = ' << *c1 << endl;
 
     }
 }
