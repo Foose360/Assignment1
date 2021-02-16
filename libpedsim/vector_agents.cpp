@@ -73,12 +73,12 @@ void Ped::Vagent::destinationReached(int i) {
 	dest_r = _mm_load_ps(this->destinationR + i); //destination r
 
     int *xp = this->x + i;
-	_x = _mm_load_si128((__m128i*)xp);
+	_x = _mm_load_ps(xp);
     int *yp = this->y + i;
-	_y = _mm_load_si128((__m128i*)yp);
+	_y = _mm_load_ps(yp);
 
-	//ps_x = _mm_castsi128_ps(_x); //float version of x and y
-	//ps_y = _mm_castsi128_ps(_y);
+	ps_x = _mm_castsi128_ps(_x); //float version of x and y
+	ps_y = _mm_castsi128_ps(_y);
 
 	dest_x = _mm_sub_ps(dest_x, ps_x); //dest_x is now diffX = destinationx - x
 	dest_y = _mm_sub_ps(dest_x, ps_y); //same
@@ -120,9 +120,9 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, 
     __m128 dest_r, tmp_a, tmp_b, ps_x, ps_y, float_x, float_y; //single floating point
 
     int *xp = this->x + i;
-    _x = _mm_load_si128((__m128i*)xp);
+    _x = _mm_load_ps(xp);
     int *yp = this->x + i;
-    _y = _mm_load_si128((__m128i*)yp);
+    _y = _mm_load_ps(yp);
 
     ps_x = _mm_castsi128_ps(_x);
     ps_y = _mm_castsi128_ps(_y);
