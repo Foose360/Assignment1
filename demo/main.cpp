@@ -120,13 +120,13 @@ int main(int argc, char*argv[]) {
 
 			// Change this variable when testing different versions of your code. 
 			// May need modification or extension in later assignments depending on your implementations
-			Ped::IMPLEMENTATION implementation_to_test = Ped::SEQ;
+			/*Ped::IMPLEMENTATION implementation_to_test = Ped::SEQ;
 			{
 				Ped::Model model;
 				ParseScenario parser(scenefile);
 				model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test);
-				Ped::Vagent v(model.getAgents());
-				model.addVagent(&v);
+				Ped::Vagent newv(model.getAgents());
+				model.addVagent(&newv);
 				PedSimulation simulation(model, mainwindow);
 				// Simulation mode to use when profiling (without any GUI)
 				std::cout << "Running target version...\n";
@@ -136,7 +136,8 @@ int main(int argc, char*argv[]) {
 				fps_target = ((float)simulation.getTickCount()) / ((float)duration_target.count())*1000.0;
 				cout << "Target time: " << duration_target.count() << " milliseconds, " << fps_target << " Frames Per Second." << std::endl;
 			}
-			std::cout << "\n\nSpeedup: " << fps_target / fps_seq << std::endl;
+			*/
+			//std::cout << "\n\nSpeedup: " << fps_target / fps_seq << std::endl;
 			
 			
 
