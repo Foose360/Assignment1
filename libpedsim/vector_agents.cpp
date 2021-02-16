@@ -6,10 +6,6 @@
 #include <stdlib.h>
 #include <emmintrin.h>
 
-Ped::Vagent::Vagent(Ped::Model mod) {
-	Ped::Vagent::init(mod);
-}
-
 void Ped::Vagent::init(Ped::Model mod) {
 
     std::vector<Tagent*> agents = mod.getAgents();
@@ -73,6 +69,10 @@ void Ped::Vagent::init(Ped::Model mod) {
         *d7 = NULL;
         *d8 = NULL;
     }
+}
+
+Ped::Vagent::Vagent(Ped::Model mod) {
+	Ped::Vagent::init(mod);
 }
 
 void Ped::Vagent::destinationReached(int i) {

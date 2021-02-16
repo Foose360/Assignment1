@@ -4,10 +4,16 @@
 #include <vector>
 #include <deque>
 #include <emmintrin.h>
+
+#include "ped_model.h"
+
 using namespace std;
 
 namespace Ped {
-	class Vagent {
+        class Model;
+        class Tagent;
+	class Vagent 
+        {
 	public:
 	Vagent(Ped::Model mod);
 
