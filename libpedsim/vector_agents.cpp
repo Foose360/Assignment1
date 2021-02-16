@@ -40,7 +40,7 @@ void Ped::Vagent::init(std::vector<Ped::Tagent*> agents) {
 		tmp = agents[i];
 
         // set all the values
-        b1[i] = 0;
+        b1[i] = 1;
         c1[i] = (float)tmp->getX();
         c2[i] = (float)tmp->getY();
         d2[i] = 0;
@@ -135,6 +135,10 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, 
     for (int k = 0; k < 4; k++) {
         int* tmpDestX = (int *)(this->destinationX + (i + k));
         int* tmpDestY = (int *)(this->destinationY + (i + k));
+        int tmpDesiredX = (int)(_x[k]);
+        int tmpDesiredY = (int)(_y[k]);
+        tagents[i]->setDesiredX(tmpDesiredX);
+        tagents[i]->setDesiredY(tmpDesiredY);
         tagents[i]->setX(*tmpDestX);
         tagents[i]->setY(*tmpDestY);
     }
@@ -148,21 +152,21 @@ void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> tagents, int i) {
         Ped::Tagent* agent = tagents[i];
         // get the waypoints deque of the agent.
         deque<Twaypoint*> waypoints = agent->getWaypoints();
-		int agentReachedDestination = *this->reachedDestination + i;   /// TODO: is this correct?
+		int agentReachedDestination = *(this->reachedDestination + i);   /// TODO: is this correct?
 		bool check;
-		if (agentReachedDestination == 0) {
+		if (agentReachedDestination != 0) {
 		    check = true;
 	    }
 		else {
 			check = false;
 		}
-		if ((check || (this->destinationX + i) == NULL) && !waypoints.empty()) { //waypointsize == 0
+		if ((check || *(this->destinationX + i) == 0) && !waypoints.empty()) { 
 			// Case 1: agent has reached destination (or has no current destination);
 			// get next destination if available
 			waypoints.push_back(agent->getDest());
 			nextDestination = waypoints.front();
 			waypoints.pop_front();
-
+            agent->setDestination(nextDestination);
 			float *tmpDestX = this->destinationX + i;
             float *tmpDestY = this->destinationY + i;
             float *tmpDestR = this->destinationR + i;
@@ -177,9 +181,9 @@ void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> tagents, int i) {
 			float *tmpDestX = this->destinationX + i;
             float *tmpDestY = this->destinationY + i;
             float *tmpDestR = this->destinationR + i;
-            *tmpDestX = (float)nextDestination->getx();
-            *tmpDestY = (float)nextDestination->gety();
-            *tmpDestR = (float)nextDestination->getr();
+            *tmpDestX = (float)agent->getx();
+            *tmpDestY = (float)agent->gety();
+            *tmpDestR = (float)agent->getr();
 		}
 	}
 }

@@ -41,6 +41,9 @@ namespace Ped {
 		// to the current destination
 		void computeNextDesiredPosition();
 
+		void setDesiredX(int desired) { desiredPositionX = desired; };
+		void setDesiredY(int desired) { desiredPositionY = desired; };
+		void setDestination(Twaypoint* dest) { destination = dest; };
 		// Position of agent defined by x and y
 		int getX() const { return x; };
 		int getY() const { return y; };
