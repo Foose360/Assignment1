@@ -127,7 +127,7 @@ int main(int argc, char*argv[]) {
 				model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test);
 				Ped::Vagent v(model);
 				model.addVagent(&v);
-				PedSimulation simulation(model, mainwindow, vagents);
+				PedSimulation simulation(model, mainwindow);
 				// Simulation mode to use when profiling (without any GUI)
 				std::cout << "Running target version...\n";
 				auto start = std::chrono::steady_clock::now();
