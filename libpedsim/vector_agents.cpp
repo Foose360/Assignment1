@@ -99,7 +99,7 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, 
     if (_mm_movemask_ps(mask1) == 0) {
         // no destination, no need to if destination == NULL { return}
         // compute where to move to
-        return;98
+        return;
     }
 
     __m128i dest_id, ldest_id, int_dest_x, int_dest_y; //ints
@@ -150,7 +150,7 @@ void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> tagents, int i) {
         deque<Twaypoint*> waypoints = agent->getWaypoints();
 		int agentReachedDestination = *this->reachedDestination + i;   /// TODO: is this correct?
 		bool check;
-		if (agentReachedDestination > 0) {
+		if (agentReachedDestination == 0) {
 		    check = true;
 	    }
 		else {
