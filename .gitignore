@@ -37,6 +37,3 @@
 
 # QT files
 *.moc
-
-# binary file
-demo/demo
