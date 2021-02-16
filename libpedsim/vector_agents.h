@@ -5,17 +5,16 @@
 #include <deque>
 #include <emmintrin.h>
 
-#include "ped_model.h"
+#include "ped_agent.h"
 
 using namespace std;
 
 namespace Ped {
-        class Model;
         class Tagent;
 	class Vagent 
         {
 	public:
-	Vagent(Ped::Model mod);
+	Vagent(std::vector<Ped::Tagent*> agents);
 
         ///////////////////////////////////////////////////////////
         /// Attributes
@@ -48,7 +47,7 @@ namespace Ped {
 
 	private:
 
-        void init(Ped::Model mod);
+        void init(std::vector<Ped::Tagent*> agents);
 
 	};
 }

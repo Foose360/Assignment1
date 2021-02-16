@@ -1,20 +1,18 @@
 #include "vector_agents.h"
 #include "ped_agent.h"
 #include "ped_waypoint.h"
-#include "ped_model.h"
 #include <math.h>
 #include <stdlib.h>
 #include <emmintrin.h>
 
-void Ped::Vagent::init(Ped::Model mod) {
+void Ped::Vagent::init(std::vector<Ped::Tagent*> agents) {
 
-    std::vector<Tagent*> agents = mod.getAgents();
     std:size_t s = agents.size();
 
 	int *x = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
 	int *y = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
 
-    int *reachedDestination = (bool *)_mm_malloc(s * sizeof(bool), 16);
+    int *reachedDestination = (int *)_mm_malloc(s * sizeof(int), 16);
 	int *destinationId = (int *)_mm_malloc(s * sizeof(int), 16); // pekare till int:s på rad.
 	float *destinationX = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
 	float *destinationY = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till double:s på rad.
@@ -43,6 +41,19 @@ void Ped::Vagent::init(Ped::Model mod) {
     for (int i = 0; i < s; i++) {
 		tmp = agents[i];
 
+        // set all the values
+        *b1 = 0;
+        *c1 = tmp->getX();
+        *c2 = tmp->getY();
+        *d1 = 0;
+        *d2 = 0;
+        *d3 = 0;
+        *d4 = 0;
+        *d5 = 0;
+        *d6 = 0;
+        *d7 = 0;
+        *d8 = 0;
+
         // iterate all the values
         b1 = b1 + 1;
         c1 = c1 + 1;
@@ -56,23 +67,11 @@ void Ped::Vagent::init(Ped::Model mod) {
         d7 = d7 + 1;
         d8 = d8 + 1;
 
-        // set all the values
-        *b1 = 0;
-        *c1 = tmp->getX();
-        *c2 = tmp->getY();
-        *d1 = tmp->getDest()->getid();
-        *d2 = tmp->getDest()->getx();
-        *d3 = tmp->getDest()->gety();
-        *d4 = tmp->getDest()->getr();
-        *d5 = NULL;
-        *d6 = NULL;
-        *d7 = NULL;
-        *d8 = NULL;
     }
 }
 
-Ped::Vagent::Vagent(Ped::Model mod) {
-	Ped::Vagent::init(mod);
+Ped::Vagent::Vagent(std::vector<Ped::Tagent*> agents) {
+	Ped::Vagent::init(agents);
 }
 
 void Ped::Vagent::destinationReached(int i) {
@@ -83,8 +82,11 @@ void Ped::Vagent::destinationReached(int i) {
 	dest_x = _mm_load_ps(this->destinationX + i); //destination x
 	dest_y = _mm_load_ps(this->destinationY + i); //destination y
 	dest_r = _mm_load_ps(this->destinationR + i); //destination r
-	_x = _mm_load_si128((__m128i*)this->x + i);
-	_y = _mm_load_si128((__m128i*)this->y + i);
+
+    int *xp = this->x + i;
+	_x = _mm_load_si128((__m128i*)xp);
+    int *yp = this->y + i;
+	_y = _mm_load_si128((__m128i*)yp);
 
 	//ps_x = _mm_castsi128_ps(_x); //float version of x and y
 	//ps_y = _mm_castsi128_ps(_y);
@@ -101,7 +103,8 @@ void Ped::Vagent::destinationReached(int i) {
 
 	_reached = _mm_cmpgt_ps(dest_r, tmp_a); //mask telling if agent
 	_reached_int = _mm_castps_si128(_reached);
-	_mm_store_si128((__m128i*)this->reachedDestination + i, _reached_int);
+    int *rdp = this->reachedDestination + i;
+	_mm_store_si128((__m128i*)rdp, _reached_int);
 }
 
 void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, int i) {
@@ -127,8 +130,10 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, 
     __m128i _x, _y, dest_id, ldest_id, int_dest_x, int_dest_y; //ints
     __m128 dest_r, tmp_a, tmp_b, ps_x, ps_y, float_x, float_y; //single floating point
 
-    _x = _mm_load_si128((__m128i*)this->x + i);
-    _y = _mm_load_si128((__m128i*)this->y + i);
+    int *xp = this->x + i;
+    _x = _mm_load_si128((__m128i*)xp);
+    int *yp = this->x + i;
+    _y = _mm_load_si128((__m128i*)yp);
 
     ps_x = _mm_castsi128_ps(_x);
     ps_y = _mm_castsi128_ps(_y);

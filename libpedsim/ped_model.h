@@ -20,6 +20,7 @@
 
 namespace Ped{
 	class Tagent;
+	class Vagent;
 
 	// The implementation modes for Assignment 1 + 2:
 	// chooses which implementation to use for tick()

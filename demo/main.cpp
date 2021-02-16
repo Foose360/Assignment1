@@ -106,7 +106,7 @@ int main(int argc, char*argv[]) {
 				Ped::Model model;
 				ParseScenario parser(scenefile);
 				model.setup(parser.getAgents(), parser.getWaypoints(), Ped::SEQ);
-				Ped::Vagent v(model);
+				Ped::Vagent v(model.getAgents());
 				model.addVagent(&v);
 				PedSimulation simulation(model, mainwindow);
 				// Simulation mode to use when profiling (without any GUI)
@@ -125,7 +125,7 @@ int main(int argc, char*argv[]) {
 				Ped::Model model;
 				ParseScenario parser(scenefile);
 				model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test);
-				Ped::Vagent v(model);
+				Ped::Vagent v(model.getAgents());
 				model.addVagent(&v);
 				PedSimulation simulation(model, mainwindow);
 				// Simulation mode to use when profiling (without any GUI)
@@ -145,7 +145,7 @@ int main(int argc, char*argv[]) {
 		else
 		{
 
-			Ped::Vagent v(model);
+			Ped::Vagent v(model.getAgents());
 			model.addVagent(&v);
 			PedSimulation simulation(model, mainwindow);
 
