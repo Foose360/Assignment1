@@ -76,101 +76,98 @@ Ped::Vagent::Vagent(Ped::Model mod) {
 }
 
 void Ped::Vagent::destinationReached(int i) {
-
-	__m128i _null, d_x, d_y, d_r, _reached, _x, _y, _len;
-	__m128 ps_x, ps_y, t_a, t_b;
+	__m128i _x, _y, _reached_int;
+	__m128 dest_x, dest_y, dest_r, ps_x, ps_y, tmp_a, tmp_b, _reached;
 	// compute if agent reached its current destination
 
-	d_x = _mm_load_si128(this->destinationX + i); //destination x
-	d_y = _mm_load_si128(this->destinationY + i); //destination y
-	d_r = _mm_load_si128(this->destinationR + i); //destination r
-	_x = _mm_load_si128(this->x + i);
-	_y = _mm_load_si128(this->y + i);
+	dest_x = _mm_load_ps(this->destinationX + i); //destination x
+	dest_y = _mm_load_ps(this->destinationY + i); //destination y
+	dest_r = _mm_load_ps(this->destinationR + i); //destination r
+	_x = _mm_load_si128((__m128i*)this->x + i);
+	_y = _mm_load_si128((__m128i*)this->y + i);
 
-	d_x = _mm_sub_epi32(d_x, _x); //d_x is now diffX = destinationx - x
-	d_y = _mm_sub_epi32(d_x, _y); //same
+	//ps_x = _mm_castsi128_ps(_x); //float version of x and y
+	//ps_y = _mm_castsi128_ps(_y);
 
-	ps_x = _mm_castsi128_ps(d_x); //float version of diffx and diffy
-	ps_y = _mm_castsi128_ps(d_y);
+	dest_x = _mm_sub_ps(dest_x, ps_x); //dest_x is now diffX = destinationx - x
+	dest_y = _mm_sub_ps(dest_x, ps_y); //same
 
-	t_a = _mm_mul_ps(ps_x, ps_x); //temporary a = diffX * diffX
-	t_b = _mm_mul_ps(ps_y, ps_y); //temporary b = diffY * diffY
+	tmp_a = _mm_mul_ps(dest_x, dest_x); //temporary a = diffX * diffX
+	tmp_b = _mm_mul_ps(dest_y, dest_y); //temporary b = diffY * diffY
 
-	t_a = _mm_add_ps(t_a, t_b); // diffX*diffX + diffY*diffY
+	tmp_a = _mm_add_ps(tmp_a, tmp_b); // diffX*diffX + diffY*diffY
 
-	t_a = _mm_sqrt_ps(t_a); // len = sqrt(diffX*diffX - diffY*diffY)
+	tmp_a = _mm_sqrt_ps(tmp_a); // len = sqrt(diffX*diffX - diffY*diffY)
 
-	_len = _mm_castps_si128(t_a); //cast to int
-
-	_reached = _mm_cmpgt_epi32(d_r, _len); //mask telling if agent
-	_mm_store_si128(this->reachedDestination + i, _reached);
+	_reached = _mm_cmpgt_ps(dest_r, tmp_a); //mask telling if agent
+	_reached_int = _mm_castps_si128(_reached);
+	_mm_store_si128((__m128i*)this->reachedDestination + i, _reached_int);
 }
 
 void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, int i) {
-	__m128i _null, d_x, d_y, mask1, mask2;
+    __m128 dest_x, dest_y, mask1, mask2, _null;
+    _null = _mm_set1_ps(0); //Oklart om funkar
+    dest_x = _mm_load_ps(this->destinationX + i); //destination x
+    dest_y = _mm_load_ps(this->destinationY + i); //destination y
 
-	_null = _mm_set1_epi32(NULL); //Oklart om funkar
-	_ones = _mm_set1_epi32(1); //TODO: 
-	d_x = _mm_load_si128(this->destinationX + i); //destination x
-	d_y = _mm_load_si128(this->destinationY + i); //destination y
+    //mask1 if dest_x == null
+    mask1 = _mm_cmpeq_ps(dest_x, _null); // m1 = |11..11|00..00|11..11|00..00| if statement true or false for all 32 bits
+    mask2 = _mm_cmpeq_ps(dest_y, _null); // m1 = |00..00|00..00|11..11|00..00|
 
-	//mask1 if dest_x == null
-	mask1 = _mm_cmpeq_epi32(d_x, _null); // m1 = |11..11|00..00|11..11|00..00| if statement true or false for all 32 bits
-	mask2 = _mm_cmpeq_epi32(d_y, _null); // m1 = |00..00|00..00|11..11|00..00|
+    mask1 = _mm_and_ps(mask1, mask2); // m1 = |11.11|00..00|11..11|00..00|
 
-	mask1 = _mm_and_si128(mask1, mask2); // m1 = |11.11|00..00|11..11|00..00|
+            //int a = _mm_movemask_epi8 (mask1)
 
-		//int a = _mm_movemask_epi8 (mask1)
+    if (_mm_movemask_ps(mask1) == 0) {
+        // no destination, no need to if destination == NULL { return}
+        // compute where to move to
+        return;
+    }
 
-	if (_mm_movemask_epi8(mask1) == _ones) {
-		// no destination, no need to if destination == NULL { return}
-		// compute where to move to
-		return;
-	}
+    __m128i _x, _y, dest_id, ldest_id, int_dest_x, int_dest_y; //ints
+    __m128 dest_r, tmp_a, tmp_b, ps_x, ps_y, float_x, float_y; //single floating point
 
-	__m128i t_x, t_y, dest_id, ldest_id; //ints
-	__m128 d_r, t_a, t_b, ps_x, ps_y; //single floating point
+    _x = _mm_load_si128((__m128i*)this->x + i);
+    _y = _mm_load_si128((__m128i*)this->y + i);
 
-	t_x = _mm_load_si128(this->x + i);
-	t_y = _mm_load_si128(this->y + i);
-	d_x = _mm_sub_epi32(d_x, t_x); //d_x is now diffX = destinationx - x
-	d_y = _mm_sub_epi32(d_x, t_y); //same
+    ps_x = _mm_castsi128_ps(_x);
+    ps_y = _mm_castsi128_ps(_y);
 
-	ps_x = _mm_castsi128_ps(d_x);
-	ps_y = _mm_castsi128_ps(d_y);
+    dest_x = _mm_sub_ps(dest_x, ps_x); //dest_x is now diffX = destinationx - x
+    dest_y = _mm_sub_ps(dest_y, ps_y);
 
-	t_a = _mm_mul_ps(ps_x, ps_x); //temporary a = diffX*diffX
-	t_b = _mm_mul_ps(ps_y, ps_y); //temporary b diffY*diffY
+    tmp_a = _mm_mul_ps(dest_x, dest_x); //temporary a = diffX*diffX
+    tmp_b = _mm_mul_ps(dest_y, dest_y); //temporary b diffY*diffY
 
-	t_a = _mm_add_ps(t_a, t_b); // diffX*diffX - diffY*diffY
+    tmp_a = _mm_add_ps(tmp_a, tmp_b); // diffX*diffX - diffY*diffY
 
-	t_a = _mm_sqrt_ps(t_a); // len = sqrt(diffX*diffX - diffY*diffY)
+    tmp_a = _mm_sqrt_ps(tmp_a); // len = sqrt(diffX*diffX - diffY*diffY)
 
-	ps_x = _mm_div_ps(ps_x, t_a); //second part of (int)round(x + diffX / len);
-	ps_y = _mm_div_ps(ps_y, t_a);
+    ps_x = _mm_div_ps(dest_x, tmp_a); //second part of (int)round(x + diffX / len);
+    ps_y = _mm_div_ps(dest_y, tmp_a);
 
-	_mm_castps_si128(ps_x); //casts to int from float 
-	_mm_castps_si128(ps_y);
+    float_x = _mm_castsi128_ps(_x);
+    float_y = _mm_castsi128_ps(_y);
 
-	t_x = _mm_add_epi32(d_x, t_x); //t_x is now the new x
-	t_y = _mm_add_epi32(d_y, t_y); //t_y is now the new y
+    float_x = _mm_add_ps(ps_x, float_x); //t_x is now the new x
+    float_y = _mm_add_ps(ps_y, float_y); //t_y is now the new y
 
-
-	//|11.11|00..00|11..11|00..00|
-	t_x = _mm_and_si128(t_x, mask1);
-	t_y = _mm_and_si128(t_y, mask1);
+    //|11.11|00..00|11..11|00..00|
+    float_x = _mm_and_ps(float_x, mask1);
+    float_y = _mm_and_ps(float_y, mask1);
 
 
-	_mm_store_si128(this->destinationX + i, t_x);
-	_mm_store_si128(this->destinationY + i, t_y);
+    _mm_store_ps(this->destinationX + i, float_x);
+    _mm_store_ps(this->destinationY + i, float_y);
 
-	for (int k = 0; k < 4; k++) {
-        float *tmpDestX = this->destinationX + (i + k);
-        float *tmpDestY = this->destinationY + (i + k);
-		tagents[i]->setX(*tmpDestX);
-		tagents[i]->setY(*tmpDestY);
-	}
+    for (int k = 0; k < 4; k++) {
+        float* tmpDestX = this->destinationX + (i + k);
+        float* tmpDestY = this->destinationY + (i + k);
+        tagents[i]->setX(*tmpDestX);
+        tagents[i]->setY(*tmpDestY);
+    }
 }
+
 
 void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> tagents, int i) {
 	Ped::Twaypoint* nextDestination = NULL;
