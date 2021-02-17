@@ -84,7 +84,7 @@ void Ped::Vagent::destinationReached(int i) {
 
 void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, int i) {
     __m128 dest_x, dest_y, mask1, mask2, _null;
-    _null = _mm_set1_ps(0); //Oklart om funkar
+    _null = _mm_set1_ps(0);
     dest_x = _mm_load_ps(this->destinationX + i); //destination x
     dest_y = _mm_load_ps(this->destinationY + i); //destination y
 
@@ -132,6 +132,7 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, 
     _mm_store_ps(this->destinationX + i, _x);
     _mm_store_ps(this->destinationY + i, _y);
 
+    /*
     for (int k = 0; k < 4; k++) {
         int* tmpDestX = (int *)(this->destinationX + (i + k));
         int* tmpDestY = (int *)(this->destinationY + (i + k));
@@ -142,6 +143,7 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, 
         tagents[i]->setX(*tmpDestX);
         tagents[i]->setY(*tmpDestY);
     }
+    */
 }
 
 
@@ -166,19 +168,19 @@ void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> tagents, int i) {
 			waypoints.push_back(agent->getDest());
 			nextDestination = waypoints.front();
 			waypoints.pop_front();
-            agent->setDestination(nextDestination);
+            // agent->setDestination(nextDestination); //// Unessesary?
             //uppdatera pekarvärde!
             *(this->destinationX + i) = (float)nextDestination->getx();
             *(this->destinationY + i) = (float)nextDestination->gety();
             *(this->destinationR + i) = (float)nextDestination->getr();
 		}
-		else {
+		//else {
 			// Case 2: agent has not yet reached destination, continue to move towards
 			// current destination
-            Twaypoint* dest = agent->getDest();
-            *(this->destinationX + i) = (float)dest->getx();
-            *(this->destinationY + i) = (float)dest->gety();
-            *(this->destinationR + i) = (float)dest->getr();
-		}
+        //    Twaypoint* dest = agent->getDest();
+        //    *(this->destinationX + i) = (float)dest->getx();
+        //    *(this->destinationY + i) = (float)dest->gety();
+        //    *(this->destinationR + i) = (float)dest->getr();
+		//}
 	}
 }
