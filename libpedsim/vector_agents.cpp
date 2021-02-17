@@ -167,23 +167,18 @@ void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> tagents, int i) {
 			nextDestination = waypoints.front();
 			waypoints.pop_front();
             agent->setDestination(nextDestination);
-			float *tmpDestX = this->destinationX + i;
-            float *tmpDestY = this->destinationY + i;
-            float *tmpDestR = this->destinationR + i;
-            *tmpDestX = (float)nextDestination->getx();
-            *tmpDestY = (float)nextDestination->gety();
-            *tmpDestR = (float)nextDestination->getr();
-			//uppdatera pekarvärde!
+            //uppdatera pekarvärde!
+            *(this->destinationX + i) = (float)nextDestination->getx();
+            *(this->destinationY + i) = (float)nextDestination->gety();
+            *(this->destinationR + i) = (float)nextDestination->getr();
 		}
 		else {
 			// Case 2: agent has not yet reached destination, continue to move towards
 			// current destination
-			float *tmpDestX = this->destinationX + i;
-            float *tmpDestY = this->destinationY + i;
-            float *tmpDestR = this->destinationR + i;
-            *tmpDestX = (float)agent->getx();
-            *tmpDestY = (float)agent->gety();
-            *tmpDestR = (float)agent->getr();
+            Twaypoint* dest = agent->getDest();
+            *(this->destinationX + i) = (float)dest->getx();
+            *(this->destinationY + i) = (float)dest->gety();
+            *(this->destinationR + i) = (float)dest->getr();
 		}
 	}
 }
