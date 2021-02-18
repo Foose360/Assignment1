@@ -7,9 +7,9 @@
 
 #include <iostream>
 
-void Ped::Vagent::init(std::vector<Ped::Tagent*> agents) {
+void Ped::Vagent::init(std::vector<Ped::Tagent*> tagents) {
 
-    std:size_t s = agents.size();
+    std:size_t s = tagents.size();
 
 	x = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till int:s på rad.
 	y = (float *)_mm_malloc(s * sizeof(float), 16); // pekare till int:s på rad.
@@ -37,7 +37,7 @@ void Ped::Vagent::init(std::vector<Ped::Tagent*> agents) {
     float *d8 = LastdestinationR;
 
     for (int i = 0; i < s; i++) {
-		tmp = agents[i];
+		tmp = tagents[i];
 
         // set all the values
         b1[i] = 1;
@@ -53,8 +53,8 @@ void Ped::Vagent::init(std::vector<Ped::Tagent*> agents) {
     }
 }
 
-Ped::Vagent::Vagent(std::vector<Ped::Tagent*> agents) {
-	Ped::Vagent::init(agents);
+Ped::Vagent::Vagent(std::vector<Ped::Tagent*> tagents) {
+	Ped::Vagent::init(tagents);
 }
 
 void Ped::Vagent::destinationReached(int i) {
@@ -82,7 +82,7 @@ void Ped::Vagent::destinationReached(int i) {
 	_mm_store_ps(this->reachedDestination + i, _reached);
 }
 
-void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, int i) {
+void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> *tagents, int i) {
     __m128 dest_x, dest_y, mask1, mask2, _null;
     _null = _mm_set1_ps(0);
     dest_x = _mm_load_ps(this->destinationX + i); //destination x
@@ -147,14 +147,14 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, 
 }
 
 
-void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> tagents, int i) {
+void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> *tagents, int i) {
 	Ped::Twaypoint* nextDestination = NULL;
 	int k = i + 4;
 	for (i; i < k; i++) {
-        Ped::Tagent* agent = tagents[i];
+        Ped::Tagent* agent = (*tagents)[i];
         // get the waypoints deque of the agent.
-        deque<Twaypoint*> waypoints = agent->getWaypoints();
-		int agentReachedDestination = *(this->reachedDestination + i);   /// TODO: is this correct?
+        deque<Twaypoint*> *waypoints = agent->getWaypoints();
+		int agentReachedDestination = *(this->reachedDestination + i);
 		bool check;
 		if (agentReachedDestination != 0) {
 		    check = true;
@@ -162,12 +162,12 @@ void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> tagents, int i) {
 		else {
 			check = false;
 		}
-		if ((check || *(this->destinationX + i) == 0) && !waypoints.empty()) { 
+		if ((check || *(this->destinationX + i) == 0) && !waypoints->empty()) { 
 			// Case 1: agent has reached destination (or has no current destination);
 			// get next destination if available
-			waypoints.push_back(agent->getDest());
-			nextDestination = waypoints.front();
-			waypoints.pop_front();
+			waypoints->push_back(agent->getDest());
+			nextDestination = waypoints->front();
+			waypoints->pop_front();
             // agent->setDestination(nextDestination); //// Unessesary?
             //uppdatera pekarvärde!
             *(this->destinationX + i) = (float)nextDestination->getx();

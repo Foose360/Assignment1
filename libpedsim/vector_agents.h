@@ -14,7 +14,7 @@ namespace Ped {
 	class Vagent 
         {
 	public:
-	Vagent(std::vector<Ped::Tagent*> agents);
+	Vagent(std::vector<Ped::Tagent*> tagents);
 
         ///////////////////////////////////////////////////////////
         /// Attributes
@@ -37,15 +37,15 @@ namespace Ped {
 
         // Update the position according to get closer
 	// to the current destination
-	void computeNextDesiredPosition(std::vector<Ped::Tagent*> tagents, int i);
+	void computeNextDesiredPosition(std::vector<Ped::Tagent*> *tagents, int i);
 
 	void destinationReached(int i);
 
-        void getNextDestination(std::vector<Ped::Tagent*> tagents, int i);
+        void getNextDestination(std::vector<Ped::Tagent*> *tagents, int i);
 
 	private:
 
-        void init(std::vector<Ped::Tagent*> agents);
+        void init(std::vector<Ped::Tagent*> tagents);
 
 	};
 }
