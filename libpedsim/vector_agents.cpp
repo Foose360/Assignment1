@@ -132,18 +132,18 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> *tagents,
     _mm_store_ps(this->destinationX + i, _x);
     _mm_store_ps(this->destinationY + i, _y);
 
-    /*
+
+    /// Update the agent to keep it synced. Could be refactored away.
     for (int k = 0; k < 4; k++) {
         int* tmpDestX = (int *)(this->destinationX + (i + k));
         int* tmpDestY = (int *)(this->destinationY + (i + k));
         int tmpDesiredX = (int)(_x[k]);
         int tmpDesiredY = (int)(_y[k]);
-        tagents[i]->setDesiredX(tmpDesiredX);
-        tagents[i]->setDesiredY(tmpDesiredY);
-        tagents[i]->setX(*tmpDestX);
-        tagents[i]->setY(*tmpDestY);
+        (*tagents)[i]->setDesiredX(tmpDesiredX);
+        (*tagents)[i]->setDesiredY(tmpDesiredY);
+        (*tagents)[i]->setX(*tmpDestX);
+        (*tagents)[i]->setY(*tmpDestY);
     }
-    */
 }
 
 
