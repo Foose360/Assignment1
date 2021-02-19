@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////
+﻿///////////////////////////////////////////////////
 // Low Level Parallel Programming 2016.
 //
 //     ==== There is no need to change this file ====
@@ -21,8 +21,12 @@ int PedSimulation::getTickCount() const
 {
 	return tickCounter;
 }
-void PedSimulation::simulateOneStep(int tick_mode, int cores)
+void PedSimulation::simulateOneStep()
 {
+	//Temporärt ändrad, så nu stödjer vårt system inte flera cores/enbart serial.
+    //Måste undersöka hur SLOT fungerar - i nuläget strular den med våra parametrar.	
+	int tick_mode = 0;
+	int cores = 1;
 	if (tick_mode == 0)
 	{
 		tickCounter++;
@@ -64,7 +68,7 @@ void PedSimulation::runSimulationWithQt(int maxNumberOfStepsToSimulate, int tick
 	maxSimulationSteps = maxNumberOfStepsToSimulate;
 
 	//movetimer.setInterval(50); // Limits the simulation to 20 FPS (if one so whiches).
-	QObject::connect(&movetimer, SIGNAL(timeout()), this, SLOT(simulateOneStep(tick_mode, cores)));
+	QObject::connect(&movetimer, SIGNAL(timeout()), this, SLOT(simulateOneStep()));
 	movetimer.start();
 }
 

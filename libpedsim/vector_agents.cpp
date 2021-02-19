@@ -113,38 +113,36 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> *tagents,
     d_x = _mm_sub_ps(dest_x, _x); //dest_x is now diffX = destinationx - x
     d_y = _mm_sub_ps(dest_y, _y);
 
-    tmp_a = _mm_mul_ps(dest_x, dest_x); //temporary a = diffX*diffX
-    tmp_b = _mm_mul_ps(dest_y, dest_y); //temporary b diffY*diffY
+    tmp_a = _mm_mul_ps(d_x, d_x); //temporary a = diffX*diffX
+    tmp_b = _mm_mul_ps(d_y, d_y); //temporary b diffY*diffY
 
     tmp_a = _mm_add_ps(tmp_a, tmp_b); // diffX*diffX - diffY*diffY
 
     tmp_a = _mm_sqrt_ps(tmp_a); // len = sqrt(diffX*diffX - diffY*diffY)
 
-    ps_x = _mm_div_ps(dest_x, tmp_a); //second part of (int)round(x + diffX / len);
-    ps_y = _mm_div_ps(dest_y, tmp_a);
+    ps_x = _mm_div_ps(d_x, tmp_a); //second part of (int)round(x + diffX / len);
+    ps_y = _mm_div_ps(d_y, tmp_a);
 
     _x = _mm_add_ps(ps_x, _x); //t_x is now the new x
     _y = _mm_add_ps(ps_y, _y); //t_y is now the new y
 
+    _mm_store_ps(this->x + i, _x);
+    _mm_store_ps(this->y + i, _y);
     //|11.11|00..00|11..11|00..00|
-    _x = _mm_and_ps(_x, mask1);
-    _y = _mm_and_ps(_y, mask1);
+    //_x = _mm_and_ps(_x, mask1);
+    //_y = _mm_and_ps(_y, mask1);
 
 
-    _mm_store_ps(this->destinationX + i, _x);
-    _mm_store_ps(this->destinationY + i, _y);
+    //_mm_store_ps(this->destinationX + i, _x);
+    //_mm_store_ps(this->destinationY + i, _y); Varför ville vi stora x och y->destination??????
 
 
     /// Update the agent to keep it synced. Could be refactored away.
     for (int k = 0; k < 4; k++) {
-        int* tmpDestX = (int *)(this->destinationX + (i + k));
-        int* tmpDestY = (int *)(this->destinationY + (i + k));
         int tmpDesiredX = (int)(_x[k]);
         int tmpDesiredY = (int)(_y[k]);
-        (*tagents)[i]->setDesiredX(tmpDesiredX);
-        (*tagents)[i]->setDesiredY(tmpDesiredY);
-        (*tagents)[i]->setX(*tmpDestX);
-        (*tagents)[i]->setY(*tmpDestY);
+        (*tagents)[i]->setX(tmpDesired); //Är vi efterblivna? Vi vill ju såklart sätta desired till X/Y direkt..
+        (*tagents)[i]->setY(tmpDesired);
     }
 }
 
@@ -156,7 +154,7 @@ void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> *tagents, int i) 
         Ped::Tagent* agent = (*tagents)[a];
         // get the waypoints deque of the agent.
         deque<Twaypoint*> *waypoints = agent->getWaypoints();
-		int agentReachedDestination: = *(this->reachedDestination + a);
+		int agentReachedDestination = *(this->reachedDestination + a);
 		bool check;
 		if (agentReachedDestination != 0) {
 		    check = true;

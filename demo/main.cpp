@@ -84,7 +84,8 @@ int main(int argc, char*argv[]) {
 		Ped::Model model;
 		ParseScenario parser(scenefile);
 		model.setup(parser.getAgents(), parser.getWaypoints(), Ped::SEQ);
-
+		Ped::Vagent v(model.getAgents());
+		model.addVagent(&v);
 		// GUI related set ups
 		QApplication app(argc, argv);
 		MainWindow mainwindow(model);
@@ -146,8 +147,6 @@ int main(int argc, char*argv[]) {
 		else
 		{
 
-			Ped::Vagent v(model.getAgents());
-			model.addVagent(&v);
 			PedSimulation simulation(model, mainwindow);
 
 			cout << "Demo setup complete, running ..." << endl;

@@ -30,7 +30,7 @@ public:
 	int getTickCount() const;
 	public slots:
 	// Performs one simulation step
-	void simulateOneStep(int tick_mode, int cores);
+	void simulateOneStep();
 
 private:
 	Ped::Model &model;

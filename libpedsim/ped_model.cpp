@@ -54,7 +54,7 @@ void Ped::Model::tick_serial()
 	int i;
 	Ped::Tagent* tmp;
 	agents = this->getAgents();
-	for (i = 0; i < agents.size()-1; i+=4) {
+	for (i = 0; i < 440; i+=4) { //Högst temporärt, men nu kan serial iaf köra på graph och --timing-mode.. (graph kör på 458 agents)
 		this->vagents->destinationReached(i);
 		this->vagents->getNextDestination(&agents, i);
 		this->vagents->computeNextDesiredPosition(&agents, i);
