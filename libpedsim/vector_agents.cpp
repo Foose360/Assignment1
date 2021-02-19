@@ -58,7 +58,7 @@ Ped::Vagent::Vagent(std::vector<Ped::Tagent*> tagents) {
 }
 
 void Ped::Vagent::destinationReached(int i) {
-	__m128 dest_x, dest_y, dest_r, ps_x, ps_y, tmp_a, tmp_b, _reached, _x, _y;
+	__m128 dest_x, dest_y, dest_r, ps_x, ps_y, tmp_a, tmp_b, _reached, _x, _y, d_x, d_y;
 	// compute if agent reached its current destination
 
 	dest_x = _mm_load_ps(this->destinationX + i); //destination x
@@ -68,11 +68,11 @@ void Ped::Vagent::destinationReached(int i) {
 	_x = _mm_load_ps(this->x + i);
     _y = _mm_load_ps(this->y + i);
 
-	dest_x = _mm_sub_ps(dest_x, _x); //dest_x is now diffX = destinationx - x
-	dest_y = _mm_sub_ps(dest_y, _y); //same
+	d_x = _mm_sub_ps(dest_x, _x); //dest_x is now diffX = destinationx - x
+	d_y = _mm_sub_ps(dest_y, _y); //same
 
-	tmp_a = _mm_mul_ps(dest_x, dest_x); //temporary a = diffX * diffX
-	tmp_b = _mm_mul_ps(dest_y, dest_y); //temporary b = diffY * diffY
+	tmp_a = _mm_mul_ps(d_x, d_x); //temporary a = diffX * diffX
+	tmp_b = _mm_mul_ps(d_y, d_y); //temporary b = diffY * diffY
 
 	tmp_a = _mm_add_ps(tmp_a, tmp_b); // diffX*diffX + diffY*diffY
 
@@ -88,9 +88,11 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> *tagents,
     dest_x = _mm_load_ps(this->destinationX + i); //destination x
     dest_y = _mm_load_ps(this->destinationY + i); //destination y
 
+
+
     //mask1 if dest_x == null
-    mask1 = _mm_cmpeq_ps(dest_x, _null); // m1 = |11..11|00..00|11..11|00..00| if statement true or false for all 32 bits
-    mask2 = _mm_cmpeq_ps(dest_y, _null); // m1 = |00..00|00..00|11..11|00..00|
+    mask1 = _mm_cmpneq_ps(dest_x, _null); // m1 = |11..11|00..00|11..11|00..00| if statement true or false for all 32 bits
+    mask2 = _mm_cmpneq_ps(dest_y, _null); // m1 = |00..00|00..00|11..11|00..00|
 
     mask1 = _mm_and_ps(mask1, mask2); // m1 = |11.11|00..00|11..11|00..00|
 
@@ -103,13 +105,13 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> *tagents,
     }
 
     __m128i dest_id, ldest_id, int_dest_x, int_dest_y; //ints
-    __m128 dest_r, tmp_a, tmp_b, ps_x, ps_y, _x, _y; //single floating point
+    __m128 dest_r, tmp_a, tmp_b, ps_x, ps_y, _x, _y, d_x, d_y; //single floating point
 
     _x = _mm_load_ps(this->x + i);
     _y = _mm_load_ps(this->y + i);
 
-    dest_x = _mm_sub_ps(dest_x, _x); //dest_x is now diffX = destinationx - x
-    dest_y = _mm_sub_ps(dest_y, _y);
+    d_x = _mm_sub_ps(dest_x, _x); //dest_x is now diffX = destinationx - x
+    d_y = _mm_sub_ps(dest_y, _y);
 
     tmp_a = _mm_mul_ps(dest_x, dest_x); //temporary a = diffX*diffX
     tmp_b = _mm_mul_ps(dest_y, dest_y); //temporary b diffY*diffY
@@ -148,13 +150,13 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> *tagents,
 
 
 void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> *tagents, int i) {
-	Ped::Twaypoint* nextDestination = NULL;
+    Ped::Twaypoint* nextDestination = NULL;
 	int k = i + 4;
-	for (i; i < k; i++) {
-        Ped::Tagent* agent = (*tagents)[i];
+	for (int a = i; a < k; a++) {
+        Ped::Tagent* agent = (*tagents)[a];
         // get the waypoints deque of the agent.
         deque<Twaypoint*> *waypoints = agent->getWaypoints();
-		int agentReachedDestination = *(this->reachedDestination + i);
+		int agentReachedDestination: = *(this->reachedDestination + a);
 		bool check;
 		if (agentReachedDestination != 0) {
 		    check = true;
@@ -162,18 +164,20 @@ void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> *tagents, int i) 
 		else {
 			check = false;
 		}
-		if ((check || *(this->destinationX + i) == 0) && !waypoints->empty()) { 
-			// Case 1: agent has reached destination (or has no current destination);
-			// get next destination if available
-			waypoints->push_back(agent->getDest());
-			nextDestination = waypoints->front();
-			waypoints->pop_front();
-            // agent->setDestination(nextDestination); //// Unessesary?
+        if ((check || *(this->destinationX + a) == 0) && !waypoints->empty()) {
+            // Case 1: agent has reached destination (or has no current destination);
+            // get next destination if available
+            waypoints->push_back(agent->getDest()); //Stämmer verkligen detta?
+            nextDestination = waypoints->front();
+            waypoints->pop_front();
+            //agent->setDestination(nextDestination); //// Unessesary?
             //uppdatera pekarvärde!
-            *(this->destinationX + i) = (float)nextDestination->getx();
-            *(this->destinationY + i) = (float)nextDestination->gety();
-            *(this->destinationR + i) = (float)nextDestination->getr();
-		}
+            if (nextDestination != NULL) {
+                *(this->destinationX + a) = (float)nextDestination->getx();
+                *(this->destinationY + a) = (float)nextDestination->gety();
+                *(this->destinationR + a) = (float)nextDestination->getr();
+            }
+        }
 		//else {
 			// Case 2: agent has not yet reached destination, continue to move towards
 			// current destination
