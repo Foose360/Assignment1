@@ -138,11 +138,11 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> *tagents,
 
 
     /// Update the agent to keep it synced. Could be refactored away.
-    for (int k = 0; k < 4; k++) {
-        int tmpDesiredX = (int)(_x[k]);
-        int tmpDesiredY = (int)(_y[k]);
-        (*tagents)[i]->setX(tmpDesired); //Är vi efterblivna? Vi vill ju såklart sätta desired till X/Y direkt..
-        (*tagents)[i]->setY(tmpDesired);
+    for (int k = i; k < i+4; k++) {
+      int tmpDesiredX = (int)(this->x[k]);
+      int tmpDesiredY = (int)(this->y[k]);
+        (*tagents)[k]->setX(tmpDesired); //Är vi efterblivna? Vi vill ju såklart sätta desired till X/Y direkt..
+        (*tagents)[k]->setY(tmpDesired);
     }
 }
 
@@ -171,9 +171,10 @@ void Ped::Vagent::getNextDestination(std::vector<Ped::Tagent*> *tagents, int i) 
             //agent->setDestination(nextDestination); //// Unessesary?
             //uppdatera pekarvärde!
             if (nextDestination != NULL) {
-                *(this->destinationX + a) = (float)nextDestination->getx();
-                *(this->destinationY + a) = (float)nextDestination->gety();
-                *(this->destinationR + a) = (float)nextDestination->getr();
+	      agent->setDestination(nextDestination);
+              *(this->destinationX + a) = (float)nextDestination->getx();
+              *(this->destinationY + a) = (float)nextDestination->gety();
+              *(this->destinationR + a) = (float)nextDestination->getr();
             }
         }
 		//else {
