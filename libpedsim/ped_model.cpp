@@ -41,8 +41,9 @@ void Ped::Model::tick_omp()
 	int i;
 	Ped::Tagent* tmp;
 	agents = this->getAgents();
+	int restProducts = agents.size() & 4;
 #pragma omp parallel for private(i, tmp)
-	for (i = 0; i < agents.size()-1; i+=4) {
+	for (i = 0; i < agents.size()-restProducts; i+=4) {
 		this->vagents->destinationReached(i);
 		this->vagents->getNextDestination(&agents, i);
 		this->vagents->computeNextDesiredPosition(&agents, i);
@@ -54,7 +55,8 @@ void Ped::Model::tick_serial()
 	int i;
 	Ped::Tagent* tmp;
 	agents = this->getAgents();
-	for (i = 0; i < 440; i+=4) { //Högst temporärt, men nu kan serial iaf köra på graph och --timing-mode.. (graph kör på 458 agents)
+	int restProducts = agents.size() % 4;
+	for (i = 0; i < agents.size()-restProducts; i+=4) { //Högst temporärt, men nu kan serial iaf köra på graph och --timing-mode.. (graph kör på 458 agents)
 		this->vagents->destinationReached(i);
 		this->vagents->getNextDestination(&agents, i);
 		this->vagents->computeNextDesiredPosition(&agents, i);
@@ -76,7 +78,8 @@ void Ped::Model::tick_threads(int cores)
 {
 	int i;
 	agents = this->getAgents();
-	int step = agents.size()-1 / cores;
+	int restProducts = agents.size() % (4 * cores);
+	int step = (agents.size()-restProducts) / cores;
 	std::thread* t = new::std::thread[cores];
 	for (i = 0; i < cores; i++) {
 		t[i] = std::thread(tick_offset, i, step, &agents, this->vagents);
