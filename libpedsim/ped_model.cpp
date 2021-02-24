@@ -14,7 +14,6 @@
 #include "cuda_testkernel.h"
 #include <omp.h>
 #include <thread>
-
 #include <stdlib.h>
 
 void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario, IMPLEMENTATION implementation)
@@ -25,6 +24,11 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 	// Set 
 	agents = std::vector<Ped::Tagent*>(agentsInScenario.begin(), agentsInScenario.end());
 
+	// initilizes the region locks
+	for(int i = 0; i < 4; i++){
+		omp_init_lock(&regionLocks[i]);
+	}
+
 	// Set up destinations
 	destinations = std::vector<Ped::Twaypoint*>(destinationsInScenario.begin(), destinationsInScenario.end());
 
@@ -33,6 +37,72 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 
 	// Set up heatmap (relevant for Assignment 4)
 	setupHeatmapSeq();
+}
+
+static int findRegion(int x, int y){
+	if(x <= 400 && y <= 300 ){
+		return 0;
+	}
+	else if(x > 400 && y <= 300)
+	{
+		return 1;
+	}
+	else if (x <= 400 && y > 300){
+		return 2;
+	}
+	else if (x > 400 && y > 300){
+		return 3;
+	}
+	else{
+		std::cerr << 'Error in findRegion.' << std::endl;
+	}
+}
+
+
+// Moves the agent to the next desired position. If already taken, it will
+// be moved to a location close to it.
+void Ped::Model::move(Ped::Tagent *agent)
+{
+	// Search for neighboring agents
+
+	// Compute the three alternative positions that would bring the agent
+	// closer to his desiredPosition, starting with the desiredPosition itself
+	std::vector<std::tuple<int, int, int> > prioritizedAlternatives;
+	std::tuple<int, int, int> pDesired(agent->getDesiredX(), agent->getDesiredY(), findRegion(agent->getDesiredX(), agent->getDesiredY()));
+	prioritizedAlternatives.push_back(pDesired);
+
+	int diffX = std::get<0>(pDesired) - agent->getX();
+	int diffY = std::get<1>(pDesired) - agent->getY();
+	std::tuple<int, int, int> p1, p2;
+	if (diffX == 0 || diffY == 0)
+	{
+		// Agent wants to walk straight to North, South, West or East
+		p1 = std::tuple<int, int, int>(std::get<0>(pDesired) + diffY, std::get<1>(pDesired) + diffX, findRegion(std::get<0>(pDesired) + diffY, std::get<1>(pDesired) + diffX));
+		p2 = std::tuple<int, int, int>(std::get<0>(pDesired) - diffY, std::get<1>(pDesired) - diffX, findRegion(std::get<0>(pDesired) - diffY, std::get<1>(pDesired) - diffX));
+	}
+	else {
+		// Agent wants to walk diagonally
+		p1 = std::tuple<int, int, int>(std::get<0>(pDesired), agent->getY(), findRegion(std::get<0>(pDesired), agent->getY()));
+		p2 = std::tuple<int, int, int>(agent->getX(), std::get<1>(pDesired), findRegion(agent->getX(), std::get<1>(pDesired)));
+	}
+	prioritizedAlternatives.push_back(p1);
+	prioritizedAlternatives.push_back(p2);
+
+	for(int i = 0; i < 3; i++){
+		std::tuple<int, int, int> p = prioritizedAlternatives[i];
+		// ta lås för area std::get<2>(p)
+		omp_set_lock(&regionLocks[std::get<2>(p)]);
+		set<const Ped::Tagent *> neighbors = getNeighbors(std::get<0>(p), std::get<1>(p), 2);
+		if(neighbors.empty()){
+			agent->setX(std::get<0>(p));
+			agent->setY(std::get<1>(p));
+			omp_unset_lock(&regionLocks[std::get<2>(p)]);
+			return;
+		}
+		else{
+			omp_unset_lock(&regionLocks[std::get<2>(p)]);
+		}
+	}
 }
 
 
@@ -47,6 +117,9 @@ void Ped::Model::tick_omp()
 		this->vagents->destinationReached(i);
 		this->vagents->getNextDestination(&agents, i);
 		this->vagents->computeNextDesiredPosition(&agents, i);
+		for(int k = i; k < i+4; k++){
+			this->move(agents[k]);
+		}
 	}
 }
 
@@ -60,6 +133,10 @@ void Ped::Model::tick_serial()
 		this->vagents->destinationReached(i);
 		this->vagents->getNextDestination(&agents, i);
 		this->vagents->computeNextDesiredPosition(&agents, i);
+
+		for(int k = i; k < i+4; k++){
+			this->move(agents[k]);
+		}
 	}
 }
 
@@ -71,6 +148,9 @@ static void tick_offset(int id, int step, std::vector<Ped::Tagent*> *agents, Ped
 		vagents->destinationReached(i);
 		vagents->getNextDestination(agents, i);
 		vagents->computeNextDesiredPosition(agents, i);
+		for(int k = i; k < i+4; k++){
+			this->move(agents[k]);
+		}
 	}
 }
 
@@ -86,63 +166,6 @@ void Ped::Model::tick_threads(int cores)
 	}
 	for (int k = 0; k < cores; k++) {
 		t[k].join();
-	}
-}
-
-////////////
-/// Everything below here relevant for Assignment 3.
-/// Don't use this for Assignment 1!
-///////////////////////////////////////////////
-
-// Moves the agent to the next desired position. If already taken, it will
-// be moved to a location close to it.
-void Ped::Model::move(Ped::Tagent *agent)
-{
-	// Search for neighboring agents
-	set<const Ped::Tagent *> neighbors = getNeighbors(agent->getX(), agent->getY(), 2);
-
-	// Retrieve their positions
-	std::vector<std::pair<int, int> > takenPositions;
-	for (std::set<const Ped::Tagent*>::iterator neighborIt = neighbors.begin(); neighborIt != neighbors.end(); ++neighborIt) {
-		std::pair<int, int> position((*neighborIt)->getX(), (*neighborIt)->getY());
-		takenPositions.push_back(position);
-	}
-
-	// Compute the three alternative positions that would bring the agent
-	// closer to his desiredPosition, starting with the desiredPosition itself
-	std::vector<std::pair<int, int> > prioritizedAlternatives;
-	std::pair<int, int> pDesired(agent->getDesiredX(), agent->getDesiredY());
-	prioritizedAlternatives.push_back(pDesired);
-
-	int diffX = pDesired.first - agent->getX();
-	int diffY = pDesired.second - agent->getY();
-	std::pair<int, int> p1, p2;
-	if (diffX == 0 || diffY == 0)
-	{
-		// Agent wants to walk straight to North, South, West or East
-		p1 = std::make_pair(pDesired.first + diffY, pDesired.second + diffX);
-		p2 = std::make_pair(pDesired.first - diffY, pDesired.second - diffX);
-	}
-	else {
-		// Agent wants to walk diagonally
-		p1 = std::make_pair(pDesired.first, agent->getY());
-		p2 = std::make_pair(agent->getX(), pDesired.second);
-	}
-	prioritizedAlternatives.push_back(p1);
-	prioritizedAlternatives.push_back(p2);
-
-	// Find the first empty alternative position
-	for (std::vector<pair<int, int> >::iterator it = prioritizedAlternatives.begin(); it != prioritizedAlternatives.end(); ++it) {
-
-		// If the current position is not yet taken by any neighbor
-		if (std::find(takenPositions.begin(), takenPositions.end(), *it) == takenPositions.end()) {
-
-			// Set the agent's position 
-			agent->setX((*it).first);
-			agent->setY((*it).second);
-
-			break;
-		}
 	}
 }
 

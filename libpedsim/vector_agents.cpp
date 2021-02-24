@@ -141,8 +141,8 @@ void Ped::Vagent::computeNextDesiredPosition(std::vector<Ped::Tagent*> *tagents,
     for (int k = i; k < i+4; k++) {
       int tmpDesiredX = (int)(this->x[k]);
       int tmpDesiredY = (int)(this->y[k]);
-        (*tagents)[k]->setX(tmpDesiredX); //Är vi efterblivna? Vi vill ju såklart sätta desired till X/Y direkt..
-        (*tagents)[k]->setY(tmpDesiredY);
+        (*tagents)[k]->setDesiredX(tmpDesiredX);
+        (*tagents)[k]->setDesiredY(tmpDesiredY);
     }
 }
 

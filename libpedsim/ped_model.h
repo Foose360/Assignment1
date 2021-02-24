@@ -14,6 +14,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <mutex>
 
 #include "ped_agent.h"
 #include "vector_agents.h"
@@ -74,6 +75,9 @@ namespace Ped{
 
 		// Moves an agent towards its next position
 		void move(Ped::Tagent *agent);
+
+		// Locks for the regions
+		omp_lock_t regionLocks[4];
 
 		////////////
 		/// Everything below here won't be relevant until Assignment 3
