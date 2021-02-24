@@ -54,7 +54,8 @@ static int findRegion(int x, int y){
 		return 3;
 	}
 	else{
-		std::cerr << 'Error in findRegion.' << std::endl;
+		std::cerr << "Error in findRegion." << std::endl;
+		return -1;
 	}
 }
 
@@ -92,8 +93,8 @@ void Ped::Model::move(Ped::Tagent *agent)
 		std::tuple<int, int, int> p = prioritizedAlternatives[i];
 		// ta lås för area std::get<2>(p)
 		omp_set_lock(&regionLocks[std::get<2>(p)]);
-		//set<const Ped::Tagent *> neighbors = getNeighbors(std::get<0>(p), std::get<1>(p), 2);
-		if(true){
+		bool neighbors = getNeighbors(std::get<0>(p), std::get<1>(p), 2);
+		if(neighbors){
 			agent->setX(std::get<0>(p));
 			agent->setY(std::get<1>(p));
 			omp_unset_lock(&regionLocks[std::get<2>(p)]);
@@ -118,7 +119,7 @@ void Ped::Model::tick_omp()
 		this->vagents->getNextDestination(&agents, i);
 		this->vagents->computeNextDesiredPosition(&agents, i);
 		for(int k = i; k < i+4; k++){
-			this->move(agents[k]);
+			move(agents[k]);
 		}
 	}
 }
@@ -135,7 +136,7 @@ void Ped::Model::tick_serial()
 		this->vagents->computeNextDesiredPosition(&agents, i);
 
 		for(int k = i; k < i+4; k++){
-			this->move(agents[k]);
+			move(agents[k]);
 		}
 	}
 }
@@ -149,7 +150,7 @@ static void tick_offset(int id, int step, std::vector<Ped::Tagent*> *agents, Ped
 		vagents->getNextDestination(agents, i);
 		vagents->computeNextDesiredPosition(agents, i);
 		for(int k = i; k < i+4; k++){
-			this->move(agents[k]);
+			move(agents[k]);
 		}
 	}
 }
@@ -171,18 +172,26 @@ void Ped::Model::tick_threads(int cores)
 
 /// Returns the list of neighbors within dist of the point x/y. This
 /// can be the position of an agent, but it is not limited to this.
-/// \date    2012-01-29
-/// \return  The list of neighbors
+/// \return  A bool corresponding to whether a spot is free or not.
 /// \param   x the x coordinate
 /// \param   y the y coordinate
 /// \param   dist the distance around x/y that will be searched for agents (search field is a square in the current implementation)
-set<const Ped::Tagent*> Ped::Model::getNeighbors(int x, int y, int dist) const {
-
-	// create the output list
-	// ( It would be better to include only the agents close by, but this programmer is lazy.)	
-	return set<const Ped::Tagent*>(agents.begin(), agents.end());
+bool Ped::Model::getNeighbors(int x, int y, int dist) const {
+	std::vector<Tagent*> agents = this->getAgents();
+	//Greedy, naive solution
+	//We still iterate though the entire list of agents.
+	//But now there is actually some collision checking..
+	for (int i = 0; i < agents.size(); i++ ){
+		int agentX = agents[i]->getX();
+		int agentY = agents[i]->getY();
+		if ((agentX - x) < dist && (agentX - x) > 0) {
+			return false;
+		} else if ((agentY - y) < dist && (agentY - y) > 0){
+			return false;
+		}
+	}
+	return true;
 }
-
 void Ped::Model::cleanup() {
 	// Nothing to do here right now. 
 }

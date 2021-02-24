@@ -84,7 +84,7 @@ namespace Ped{
 		///////////////////////////////////////////////
 
 		// Returns the set of neighboring agents for the specified position
-		set<const Ped::Tagent*> getNeighbors(int x, int y, int dist) const;
+		bool getNeighbors(int x, int y, int dist) const;
 
 		////////////
 		/// Everything below here won't be relevant until Assignment 4
