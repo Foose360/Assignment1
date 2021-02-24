@@ -92,8 +92,8 @@ void Ped::Model::move(Ped::Tagent *agent)
 		std::tuple<int, int, int> p = prioritizedAlternatives[i];
 		// ta lås för area std::get<2>(p)
 		omp_set_lock(&regionLocks[std::get<2>(p)]);
-		set<const Ped::Tagent *> neighbors = getNeighbors(std::get<0>(p), std::get<1>(p), 2);
-		if(neighbors.empty()){
+		//set<const Ped::Tagent *> neighbors = getNeighbors(std::get<0>(p), std::get<1>(p), 2);
+		if(true){
 			agent->setX(std::get<0>(p));
 			agent->setY(std::get<1>(p));
 			omp_unset_lock(&regionLocks[std::get<2>(p)]);

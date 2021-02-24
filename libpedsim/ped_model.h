@@ -14,7 +14,7 @@
 #include <vector>
 #include <map>
 #include <set>
-#include <mutex>
+#include <omp.h>
 
 #include "ped_agent.h"
 #include "vector_agents.h"
