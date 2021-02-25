@@ -62,7 +62,7 @@ static int findRegion(int x, int y){
 
 // Moves the agent to the next desired position. If already taken, it will
 // be moved to a location close to it.
-void Ped::Model::move(Ped::Tagent *agent)
+bool Ped::Model::move(Ped::Tagent *agent)
 {
 	// Search for neighboring agents
 
@@ -93,17 +93,18 @@ void Ped::Model::move(Ped::Tagent *agent)
 		std::tuple<int, int, int> p = prioritizedAlternatives[i];
 		// ta lås för area std::get<2>(p)
 		omp_set_lock(&regionLocks[std::get<2>(p)]);
-		bool neighbors = getNeighbors(std::get<0>(p), std::get<1>(p), 2);
+		bool neighbors = getNeighbors(std::get<0>(p), std::get<1>(p), 1);
 		if(neighbors){
 			agent->setX(std::get<0>(p));
 			agent->setY(std::get<1>(p));
 			omp_unset_lock(&regionLocks[std::get<2>(p)]);
-			return;
+			return true;
 		}
 		else{
 			omp_unset_lock(&regionLocks[std::get<2>(p)]);
 		}
 	}
+	return false;
 }
 
 
@@ -119,7 +120,11 @@ void Ped::Model::tick_omp()
 		this->vagents->getNextDestination(&agents, i);
 		this->vagents->computeNextDesiredPosition(&agents, i);
 		for(int k = i; k < i+4; k++){
-			move(agents[k]);
+			if (move(agents[k])) {
+				this->vagents->x[k] = agents[k]->getX();
+				this->vagents->y[k] = agents[k]->getY();
+		    
+			}
 		}
 	}
 }
@@ -136,7 +141,11 @@ void Ped::Model::tick_serial()
 		this->vagents->computeNextDesiredPosition(&agents, i);
 
 		for(int k = i; k < i+4; k++){
-			move(agents[k]);
+			if (move(agents[k])) {
+				this->vagents->x[k] = agents[k]->getX();
+				this->vagents->y[k] = agents[k]->getY();
+		    
+			}
 		}
 	}
 }
@@ -150,7 +159,11 @@ static void tick_offset(int id, int step, std::vector<Ped::Tagent*> *agents, Ped
 		vagents->getNextDestination(agents, i);
 		vagents->computeNextDesiredPosition(agents, i);
 		for(int k = i; k < i+4; k++){
-			move(agents[k]);
+			if (move((*agents)[k])) {
+				vagents->x[k] = (*agents)[k]->getX();
+				vagents->y[k] = (*agents)[k]->getY();
+		    
+			}
 		}
 	}
 }
@@ -184,10 +197,10 @@ bool Ped::Model::getNeighbors(int x, int y, int dist) const {
 	for (int i = 0; i < agents.size(); i++ ){
 		int agentX = agents[i]->getX();
 		int agentY = agents[i]->getY();
-		if ((agentX - x) < dist && (agentX - x) > 0) {
-			return false;
-		} else if ((agentY - y) < dist && (agentY - y) > 0){
-			return false;
+		if ((agentX - x) <= dist && (agentX - x) >= 0) {
+			if ((agentY - y) < dist && (agentY - y) > 0){
+ 				return false;
+ 			}
 		}
 	}
 	return true;

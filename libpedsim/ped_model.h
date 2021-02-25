@@ -74,7 +74,7 @@ namespace Ped{
 		std::vector<Twaypoint*> destinations;
 
 		// Moves an agent towards its next position
-		void move(Ped::Tagent *agent);
+		bool move(Ped::Tagent *agent);
 
 		// Locks for the regions
 		omp_lock_t regionLocks[4];
