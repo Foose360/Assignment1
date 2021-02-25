@@ -47,6 +47,11 @@ namespace Ped{
 		// Adds an agent to the tree structure
 		void placeAgent(const Ped::Tagent *a);
 
+	        //Moves agent from vector moveFrom to vector moveTo.
+	  void findAndMove(std::vector<Ped::Tagent*> moveFrom, std::vector<Ped::Tagent*> moveTo, Ped::Tagent *agent);
+
+	        std::vector<std::vector<Ped::Tagent*>*> placeAgents(std::vector<Tagent*> a);
+
 		// Cleans up the tree and restructures it. Worth calling every now and then.
 		void cleanup();
 		~Model();
@@ -70,6 +75,8 @@ namespace Ped{
 		// The agents in this scenario
 		std::vector<Tagent*> agents;
 
+	        //The agents in this scenario sorted by their current regions
+	        std::vector<std::vector<Ped::Tagent*>*> regionAgents;
 		// The waypoints in this scenario
 		std::vector<Twaypoint*> destinations;
 

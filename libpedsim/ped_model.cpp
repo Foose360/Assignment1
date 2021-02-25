@@ -21,7 +21,8 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 	// Convenience test: does CUDA work on this machine?
 	cuda_test();
 
-	// Set 
+	// Set
+	
 	agents = std::vector<Ped::Tagent*>(agentsInScenario.begin(), agentsInScenario.end());
 
 	// initilizes the region locks
@@ -32,12 +33,14 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 	// Set up destinations
 	destinations = std::vector<Ped::Twaypoint*>(destinationsInScenario.begin(), destinationsInScenario.end());
 
+	regionAgents = placeAgents(agents);
 	// Sets the chosen implemenation. Standard in the given code is SEQ
 	this->implementation = implementation;
 
 	// Set up heatmap (relevant for Assignment 4)
 	setupHeatmapSeq();
 }
+
 
 static int findRegion(int x, int y){
 	if(x <= 400 && y <= 300 ){
@@ -58,6 +61,29 @@ static int findRegion(int x, int y){
 		return -1;
 	}
 }
+
+
+std::vector<std::vector<Ped::Tagent*>*> placeAgents(std::vector<Ped::Tagent*> agentvector) {
+	int index;		
+	std::vector<std::vector<Ped::Tagent*>*> tmpvector;
+	//AGENTS = [R1, R2, R3, R4]
+	for (int i = 0; i < agentvector.size(); i++) {
+		index = findRegion(agentvector[i]->getX(), agentvector[i]->getY());
+		agentvector[i]->setRegion(index);
+		tmpvector[index]->push_back(agentvector[i]);			
+	}
+	return tmpvector;  
+}
+
+void findAndMove(std::vector<Ped::Tagent*> moveFrom, std::vector<Ped::Tagent*> moveTo, Ped::Tagent *agent) {
+		
+	std::vector<Ped::Tagent*>::iterator position = std::find(moveFrom.begin(), moveFrom.end(), agent);
+	if (position != moveFrom.end()) {
+		moveTo.push_back(agent);
+		moveFrom.erase(position);
+	}	 
+}
+
 
 
 // Moves the agent to the next desired position. If already taken, it will
@@ -88,15 +114,23 @@ bool Ped::Model::move(Ped::Tagent *agent)
 	}
 	prioritizedAlternatives.push_back(p1);
 	prioritizedAlternatives.push_back(p2);
-
+	//delegera docalc(t 2) 
 	for(int i = 0; i < 3; i++){
 		std::tuple<int, int, int> p = prioritizedAlternatives[i];
 		// ta lås för area std::get<2>(p)
-		omp_set_lock(&regionLocks[std::get<2>(p)]);
 		bool neighbors = getNeighbors(std::get<0>(p), std::get<1>(p), 1);
 		if(neighbors){
+			omp_set_lock(&regionLocks[std::get<2>(p)]); //Dela in uppgifter efter tråd
 			agent->setX(std::get<0>(p));
 			agent->setY(std::get<1>(p));
+       			if (agent->getRegion() != std::get<2>(p)) { //En agent är påväg till en annan region
+				int lockNR = agent->getRegion();
+				omp_set_lock(&regionLocks[lockNR]); //Set lock för region vi rör oss ifrån
+				agent->setRegion(std::get<2>(p));				
+				findAndMove(*regionAgents[lockNR], *regionAgents[std::get<2>(p)], agent);
+				omp_unset_lock(&regionLocks[lockNR]); //lås upp
+			}
+			
 			omp_unset_lock(&regionLocks[std::get<2>(p)]);
 			return true;
 		}
@@ -119,14 +153,14 @@ void Ped::Model::tick_omp()
 		this->vagents->destinationReached(i);
 		this->vagents->getNextDestination(&agents, i);
 		this->vagents->computeNextDesiredPosition(&agents, i);
-		for(int k = i; k < i+4; k++){
-			if (move(agents[k])) {
-				this->vagents->x[k] = agents[k]->getX();
-				this->vagents->y[k] = agents[k]->getY();
-		    
-			}
-		}
 	}
+#pragma omp parallel
+	for(int k = i; k < i+4; k++){
+		if (move(agents[k])) {
+			this->vagents->x[k] = agents[k]->getX();
+			this->vagents->y[k] = agents[k]->getY();				
+		}
+	}		
 }
 
 void Ped::Model::tick_serial()
@@ -198,7 +232,7 @@ bool Ped::Model::getNeighbors(int x, int y, int dist) const {
 		int agentX = agents[i]->getX();
 		int agentY = agents[i]->getY();
 		if ((agentX - x) <= dist && (agentX - x) >= 0) {
-			if ((agentY - y) < dist && (agentY - y) > 0){
+			if ((agentY - y) <= dist && (agentY - y) >= 0){
  				return false;
  			}
 		}

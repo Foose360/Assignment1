@@ -36,7 +36,7 @@ namespace Ped {
 		// Sets the agent's position
 		void setX(int newX) { x = newX; }
 		void setY(int newY) { y = newY; }
-
+	        void setRegion(int index) { region = index; }
 		// Update the position according to get closer
 		// to the current destination
 		void computeNextDesiredPosition();
@@ -47,6 +47,7 @@ namespace Ped {
 		// Position of agent defined by x and y
 		int getX() const { return x; };
 		int getY() const { return y; };
+	        int getRegion() const { return region; };
 
 		// Adds a new waypoint to reach for this agent
 		void addWaypoint(Twaypoint* wp);  
@@ -63,7 +64,7 @@ namespace Ped {
 		// The agent's current position
 		int x;
 		int y;
-
+	        int region;
 		// The agent's desired next position
 		int desiredPositionX;
 		int desiredPositionY;
