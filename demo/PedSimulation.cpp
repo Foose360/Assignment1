@@ -25,8 +25,8 @@ void PedSimulation::simulateOneStep()
 {
 	//Temporärt ändrad, så nu stödjer vårt system inte flera cores/enbart serial.
     //Måste undersöka hur SLOT fungerar - i nuläget strular den med våra parametrar.	
-	int tick_mode = 0;
-	int cores = 1;
+	int tick_mode = 1;
+	int cores = 4;
 	if (tick_mode == 0)
 	{
 		tickCounter++;

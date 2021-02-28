@@ -91,7 +91,7 @@ int main(int argc, char*argv[]) {
 		MainWindow mainwindow(model);
 
 		// Default number of steps to simulate. Feel free to change this.
-		const int maxNumberOfStepsToSimulate = 10000;
+		const int maxNumberOfStepsToSimulate = 1000;
 		
 				
 

@@ -25,6 +25,7 @@ void Ped::Tagent::init(int posX, int posY) {
 	destination = NULL;
 	lastDestination = NULL;
 	region = -1;
+	index = -1;
 }
 
 void Ped::Tagent::computeNextDesiredPosition() {

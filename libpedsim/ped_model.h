@@ -43,15 +43,10 @@ namespace Ped{
 		const std::vector<Tagent*> getAgents() const { return agents; };
 
 		const std::vector<Twaypoint*> getDestinations() const { return destinations; };
-
 		// Adds an agent to the tree structure
 		void placeAgent(const Ped::Tagent *a);
-
-	        //Moves agent from vector moveFrom to vector moveTo.
-	  void findAndMove(std::vector<Ped::Tagent*> moveFrom, std::vector<Ped::Tagent*> moveTo, Ped::Tagent *agent);
-
-	        std::vector<std::vector<Ped::Tagent*>*> placeAgents(std::vector<Tagent*> a);
-
+	 	       
+	        std::vector<std::vector<int>> placeAgents();
 		// Cleans up the tree and restructures it. Worth calling every now and then.
 		void cleanup();
 		~Model();
@@ -61,7 +56,9 @@ namespace Ped{
 		int getHeatmapSize() const;
 
 		Ped::Vagent *vagents;
+         	void delegateTasks();
 
+	        void moveOmp(int region);
 		// Adds a Vagent to the model. // STUDENT MADE //
 		void addVagent(Ped::Vagent *v) { vagents = v; }
 
@@ -76,12 +73,14 @@ namespace Ped{
 		std::vector<Tagent*> agents;
 
 	        //The agents in this scenario sorted by their current regions
-	        std::vector<std::vector<Ped::Tagent*>*> regionAgents;
+	        std::vector<std::vector<int>> regionAgents;
 		// The waypoints in this scenario
 		std::vector<Twaypoint*> destinations;
 
+         	std::vector<int> agentQueue;
+
 		// Moves an agent towards its next position
-		bool move(Ped::Tagent *agent);
+	  bool move(Ped::Tagent *agent, bool addToagentQueue);
 
 		// Locks for the regions
 		omp_lock_t regionLocks[4];
@@ -91,7 +90,7 @@ namespace Ped{
 		///////////////////////////////////////////////
 
 		// Returns the set of neighboring agents for the specified position
-		bool getNeighbors(int x, int y, int dist) const;
+	  bool getNeighbors(int x, int y, int dist, int region) const;
 
 		////////////
 		/// Everything below here won't be relevant until Assignment 4
