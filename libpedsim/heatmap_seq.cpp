@@ -36,7 +36,7 @@ void Ped::Model::setupHeatmapSeq()
 }
 
 // Updates the heatmap according to the agent positions
-void Ped::Model::updateHeatmapSeq()
+__global__ void Ped::Model::updateHeatmapSeq(int *d_desX, int *d_desY)
 {
 	for (int x = 0; x < SIZE; x++)
 	{
