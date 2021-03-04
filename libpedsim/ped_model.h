@@ -111,6 +111,12 @@ namespace Ped{
 
 		void setupHeatmapSeq();
 		void updateHeatmapSeq();
+
+		void apply_decay(int *d_desX, int *d_desY);
+		void apply_heat(int *d_desX, int *d_desY);
+		void set_heat(int *d_desX, int *d_desY);
+		void scale_heatmap(int *d_desX, int *d_desY);
+		void apply_gaussian(int *d_desX, int *d_desY);
 	};
 }
 #endif

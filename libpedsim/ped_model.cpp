@@ -241,10 +241,10 @@ void Ped::Model::tick_serial()
 	}
 
 	size_t bytes =  sizeof(int) * agents.size();
-	cudaMalloc((void **) &d_desX, bytes);
+	cudaHostMalloc((void **) &d_desX, bytes);
 	cudaMemcpy((void *) d_desX, (void *) h_desX, bytes, cudaMemcpyHostToDevice);
 
-	cudaMalloc((void **) &d_desY, bytes);
+	cudaHostMalloc((void **) &d_desY, bytes);
 	cudaMemcpy((void *) d_desY, (void *) h_desY, bytes, cudaMemcpyHostToDevice);
 
 	updateHeatmapSeq<<<1, 128>>>(d_desX, d_desY);
