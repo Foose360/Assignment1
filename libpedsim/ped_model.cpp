@@ -240,6 +240,7 @@ void Ped::Model::tick_serial()
 		h_desY[i] = agents[i]->getDesiredY();
 	}
 
+	size_t bytes =  sizeof(int) * agents.size();
 	cudaMalloc((void **) &d_desX, bytes);
 	cudaMemcpy((void *) d_desX, (void *) h_desX, bytes, cudaMemcpyHostToDevice);
 
