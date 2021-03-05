@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <cmath>
+
 using namespace std;
 
 // Memory leak check with msvc++
@@ -41,7 +42,7 @@ void Ped::Model::setupHeatmapSeq()
 //4: Scale every square of heatmaps values into scaled_heatmap. (3, whole_map)
 //5: Apply gaussian blurfilter to whole map. (4, whole_map)
 
-__global__ void Ped::Model::apply_decay(int *d_desX, int *d_desY){
+void Ped::Model::apply_decay(int *d_desX, int *d_desY){
 	for (int x = 0; x < SIZE; x++)
 	{
 		for (int y = 0; y < SIZE; y++)
@@ -52,7 +53,7 @@ __global__ void Ped::Model::apply_decay(int *d_desX, int *d_desY){
 	}
 }
 
-__global__ void Ped::Model::apply_heat(int *d_desX, int *d_desY){
+void Ped::Model::apply_heat(int *d_desX, int *d_desY){
 	// Count how many agents want to go to each location
 	for (int i = 0; i < agents.size(); i++)
 	{
@@ -70,7 +71,7 @@ __global__ void Ped::Model::apply_heat(int *d_desX, int *d_desY){
 	}
 }
 
-__global__ void Ped::Model::set_heat(int *d_desX, int *d_desY){
+void Ped::Model::set_heat(int *d_desX, int *d_desY){
 	for (int x = 0; x < SIZE; x++)
 	{
 		for (int y = 0; y < SIZE; y++)
@@ -80,7 +81,7 @@ __global__ void Ped::Model::set_heat(int *d_desX, int *d_desY){
 	}
 }
 
-__global__ void Ped::Model::scale_heatmap(int *d_desX, int *d_desY){
+void Ped::Model::scale_heatmap(int *d_desX, int *d_desY){
 	// Scale the data for visual representation
 	for (int y = 0; y < SIZE; y++)
 	{
@@ -98,7 +99,7 @@ __global__ void Ped::Model::scale_heatmap(int *d_desX, int *d_desY){
 	}
 }
 
-__global__ void Ped::Model::apply_gaussian(int *d_desX, int *d_desY){
+void Ped::Model::apply_gaussian(int *d_desX, int *d_desY){
 // Weights for blur filter
 	const int w[5][5] = {
 		{ 1, 4, 7, 4, 1 },

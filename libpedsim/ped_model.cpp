@@ -15,6 +15,7 @@
 #include <omp.h>
 #include <thread>
 #include <stdlib.h>
+#include "cuda_runtime.h"
 
 static int findRegion(int x, int y){
 	if(x <= 80 && y <= 60 ){
@@ -186,7 +187,6 @@ void Ped::Model::moveOmp(int region) {
                         this->vagents->y[index] = this->agents[index]->getY();
                 }
         }
-		updateHeatmapSeq();
 }
 
 void Ped::Model::tick_omp()
@@ -211,7 +211,6 @@ void Ped::Model::tick_omp()
 			this->vagents->x[index] = this->agents[index]->getX();
 		}
 	}
-	updateHeatmapSeq();
 	this->agentQueue.clear();
 }
 
@@ -228,31 +227,7 @@ void Ped::Model::tick_serial()
 		this->vagents->computeNextDesiredPosition(&agents, i);
 	}
 
-	// SKAPA DATA ATT LADDA IN
-	int h_desX[agents.size()];
-	int h_desY[agents.size()];
-
-	int *d_desX;
-	int *d_desY;
-
-	for (i = 0; i < agents.size(); i++){
-		h_desX[i] = agents[i]->getDesiredX();
-		h_desY[i] = agents[i]->getDesiredY();
-	}
-
-	size_t bytes =  sizeof(int) * agents.size();
-	cudaHostMalloc((void **) &d_desX, bytes);
-	cudaMemcpy((void *) d_desX, (void *) h_desX, bytes, cudaMemcpyHostToDevice);
-
-	cudaHostMalloc((void **) &d_desY, bytes);
-	cudaMemcpy((void *) d_desY, (void *) h_desY, bytes, cudaMemcpyHostToDevice);
-
-	updateHeatmapSeq<<<1, 128>>>(d_desX, d_desY);
-
-	// LADDA IN DATA I DEVICE
-	// STARTA KERNEL
-	updateHeatmapSeq();
-	//
+	cuda_updateHeatmapSeq();
 
     for(int k = 0; k < agents.size()-restProducts; k++){
 		if (move(agents[k], false)) {

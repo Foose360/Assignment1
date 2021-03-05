@@ -62,15 +62,24 @@ namespace Ped{
 		// Adds a Vagent to the model. // STUDENT MADE //
 		void addVagent(Ped::Vagent *v) { vagents = v; }
 
+		// The heatmap representing the density of agents
+		int ** heatmap;
+
+		// The scaled heatmap that fits to the view
+		int ** scaled_heatmap;
+
+		// The final heatmap: blurred and scaled to fit the view
+		int ** blurred_heatmap;
+
+		// The agents in this scenario
+		std::vector<Tagent*> agents;
+
 	private:
 
 		// Denotes which implementation (sequential, parallel implementations..)
 		// should be used for calculating the desired positions of
 		// agents (Assignment 1)
 		IMPLEMENTATION implementation;
-
-		// The agents in this scenario
-		std::vector<Tagent*> agents;
 
 	        //The agents in this scenario sorted by their current regions
 	        std::vector<std::vector<int>> regionAgents;
@@ -100,15 +109,6 @@ namespace Ped{
 #define CELLSIZE 5
 #define SCALED_SIZE SIZE*CELLSIZE
 
-		// The heatmap representing the density of agents
-		int ** heatmap;
-
-		// The scaled heatmap that fits to the view
-		int ** scaled_heatmap;
-
-		// The final heatmap: blurred and scaled to fit the view
-		int ** blurred_heatmap;
-
 		void setupHeatmapSeq();
 		void updateHeatmapSeq();
 
@@ -117,6 +117,8 @@ namespace Ped{
 		void set_heat(int *d_desX, int *d_desY);
 		void scale_heatmap(int *d_desX, int *d_desY);
 		void apply_gaussian(int *d_desX, int *d_desY);
+
+		void cuda_updateHeatmapSeq();
 	};
 }
 #endif
