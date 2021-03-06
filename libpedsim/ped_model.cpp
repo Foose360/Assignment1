@@ -246,6 +246,13 @@ void Ped::Model::tick_serial()
 	}
 
 	// Uppsammling av CPU/GPU
+	for (int i = 0; i < SCALED_SIZE; i++) {
+	  for (int k = 0; k < SCALED_SIZE; k++) {	    
+	    if (blurred_heatmap[i][k]) {
+	      std::cout << "value: " << blurred_heatmap[i][k];
+	    }
+	  }
+	}
 	
 	agentQueue.clear();
 }
