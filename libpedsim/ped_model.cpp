@@ -226,7 +226,7 @@ void Ped::Model::tick_serial()
 		this->vagents->getNextDestination(&agents, i);
 		this->vagents->computeNextDesiredPosition(&agents, i);
 	}
-	updateHeatmapSeq();
+	cuda_updateHeatmapSeq();
 	
 	
     for(int k = 0; k < agents.size()-restProducts; k++){

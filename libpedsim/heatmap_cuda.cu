@@ -10,9 +10,6 @@
 __global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_scaled_heatmap, int *d_blurred_heatmap, size_t agentSize)
 {
     int id = threadIdx.x;
-    if (id >= 0) {
-      atomicAdd(&d_blurred_heatmap[440],1);
-    }
 
 	for (int x = 0; x < SIZE; x++)
 	{
@@ -36,40 +33,27 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
 		}
     }
 
-    __syncthreads();
 
 	for (int x = 0; x < SIZE; x++)
 	{
 		d_heatmap[id*SIZE + x] = d_heatmap[id*SIZE + x] < 255 ? d_heatmap[id*SIZE + x] : 255;
 	}
 
-    __syncthreads();
 
     // Scale the data for visual representation
-    if (id == 0) {
-      	for (int y = 0; y < SIZE; y++)
-	{
-		for (int x = 0; x < SIZE; x++)
-		{
-			int value = d_heatmap[y*SIZE + x];
-			
-			for (int cellY = 0; cellY < CELLSIZE; cellY++)
-			{
-				for (int cellX = 0; cellX < CELLSIZE; cellX++)
-				{
-				  d_scaled_heatmap[SCALED_SIZE*(y * CELLSIZE + cellY) + x * CELLSIZE + cellX] = value;
-				}
-			}
-		}
-	}
-# if __CUDA_ARCH__>=200
-	printf("%d heatmap \n", d_heatmap[524800]);
-	printf("%d scaled \n", d_scaled_heatmap[13109760]);
-#endif 
-
-    }
-		
-
+    for (int x = 0; x < SIZE; x++)
+      {
+	int value = d_heatmap[id*SIZE + x];
+	
+	for (int cellY = 0; cellY < CELLSIZE; cellY++)
+	  {
+	    for (int cellX = 0; cellX < CELLSIZE; cellX++)
+	      {
+		d_scaled_heatmap[SCALED_SIZE*(id * CELLSIZE + cellY) + x * CELLSIZE + cellX] = value;
+	      }
+	  }
+      }
+	        
     __syncthreads();
     
 	// Weights for blur filter
