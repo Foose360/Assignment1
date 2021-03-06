@@ -7,13 +7,16 @@
 #include "device_launch_parameters.h"
 
 // Updates the heatmap according to the agent positions
-__global__ void cuda_update(int *d_desX, int *d_desY, int **d_heatmap, int **d_scaled_heatmap, int **d_blurred_heatmap, size_t agentSize)
+__global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_scaled_heatmap, int *d_blurred_heatmap, size_t agentSize)
 {
     int id = threadIdx.x;
+    if (id >= 0) {
+      d_heatmap[440]+=1;
+    }
 
 	for (int x = 0; x < SIZE; x++)
 	{
-		d_heatmap[id][x] = (int)round(d_heatmap[id][x] * 0.80);
+		d_heatmap[id*SIZE + x] = (int)round(d_heatmap[id*SIZE + x] * 0.80);
 	}
 
     __syncthreads();
@@ -21,23 +24,23 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int **d_heatmap, int **d_s
 	// Count how many agents want to go to each location
     if(id <= agentSize){
         int x = d_desX[id];
-		int y = d_desY[id];
+	int y = d_desY[id];
 
 		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
 		{
 
 		}
-        else {
+		else {
 		    // intensify heat for better color results TODO: AtomicAdd
-		    d_heatmap[y][x] += 40;
-        }
+		    d_heatmap[y*SIZE + x] += 40;
+		}
     }
 
     __syncthreads();
 
 	for (int x = 0; x < SIZE; x++)
 	{
-		d_heatmap[id][x] = d_heatmap[id][x] < 255 ? d_heatmap[id][x] : 255;
+		d_heatmap[id*SIZE + x] = d_heatmap[id*SIZE + x] < 255 ? d_heatmap[id*SIZE + x] : 255;
 	}
 
     __syncthreads();
@@ -45,17 +48,17 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int **d_heatmap, int **d_s
 	// Scale the data for visual representation
 		for (int x = 0; x < SIZE; x++){
 
-		int value = d_heatmap[id][x];
+		int value = d_heatmap[id*SIZE + x];
 
 		for (int cellY = 0; cellY < CELLSIZE; cellY++){
 			for (int cellX = 0; cellX < CELLSIZE; cellX++){
-				d_scaled_heatmap[id * CELLSIZE + cellY][x * CELLSIZE + cellX] = value;
+			  d_scaled_heatmap[((id * CELLSIZE + cellY)*SCALED_SIZE) + x * CELLSIZE + cellX] = value;
 			}
 		}
 	}
 
     __syncthreads();
-
+    
 	// Weights for blur filter
 	const int w[5][5] = {
 		{ 1, 4, 7, 4, 1 },
@@ -76,11 +79,11 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int **d_heatmap, int **d_s
 			{
 				for (int l = -2; l < 3; l++)
 				{
-					sum += w[2 + k][2 + l] * d_scaled_heatmap[i + id + k][j + l];
+				  sum += w[2 + k][2 + l] * d_scaled_heatmap[SCALED_SIZE*(i + id + k) + j + l];
 				}
 			}
 			int value = sum / WEIGHTSUM;
-			d_blurred_heatmap[i][j] = 0x00FF0000 | value << 24;
+			d_blurred_heatmap[i*SCALED_SIZE + j] = 0x00FF0000 | value << 24;
 		}
 	}
 
@@ -91,41 +94,18 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int **d_heatmap, int **d_s
 void Ped::Model::cuda_updateHeatmapSeq(){
     ///// SKAPA DATA ATT LADDA IN /////
     size_t agentSize = agents.size();
-	int h_desX[agentSize];
-	int h_desY[agentSize];
+	int *h_desX = new int[agentSize];
+	int *h_desY = new int[agentSize];
 	int *d_desX;
 	int *d_desY;
 
-    int h_heatmap[SIZE][SIZE];
-    int h_scaled_heatmap[SCALED_SIZE][SCALED_SIZE];
-    int h_blurred_heatmap[SCALED_SIZE][SCALED_SIZE];
-    int **d_heatmap;
-    int **d_scaled_heatmap;
-    int **d_blurred_heatmap;
-
+    int *h_heatmap = new int[SIZE * SIZE];
+    int *h_scaled_heatmap = new int[SCALED_SIZE * SCALED_SIZE];
+    int *h_blurred_heatmap = new int[SCALED_SIZE * SCALED_SIZE];
+    int *d_heatmap;
+    int *d_scaled_heatmap;
+    int *d_blurred_heatmap;
     ///////////////////////////////////////
-
-    ///// INIT DATA SOM SKA LADDAS IN /////
-	for (int i = 0; i < agentSize; i++){
-		h_desX[i] = agents[i]->getDesiredX();
-		h_desY[i] = agents[i]->getDesiredY();
-	}
-
-    for(int i = 0; i < SIZE; i++){
-        for(int k = 0; k < SIZE; k++){
-
-            h_heatmap[i][k] = heatmap[i][k];
-
-        }
-    }
-
-    for(int i = 0; i < SCALED_SIZE; i++){       ///Detta borde inte vara nödvändigt, men safe:ar.
-        for(int k = 0; k < SCALED_SIZE; k++){
-    
-            h_scaled_heatmap[i][k] = 0;
-            h_blurred_heatmap[i][k] = 0;
-        }
-    }
 
 
     ///////////////////////////////////////
@@ -138,42 +118,63 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     size_t ScaledHeatmapBytes = SCALED_SIZE * SCALED_SIZE * sizeof(int);
 
     // allocering av minne i device variabler
-    cudaMallocHost((void **)&d_desX, AgentBytes);
-    cudaMallocHost((void **)&d_desY, AgentBytes);
-
+    cudaMallocHost((void **)&h_desX, AgentBytes);
+    cudaMallocHost((void **)&h_desY, AgentBytes);
     cudaError_t errd = cudaGetLastError();
     if ( errd != cudaSuccess )
     {
        printf("CUDA Error in 'DEST!': %s\n", cudaGetErrorString(errd));       
     }
+    cudaMallocHost((void **)&h_heatmap, HeatmapBytes);
+    cudaMallocHost((void **)&h_scaled_heatmap, ScaledHeatmapBytes);
+    cudaMallocHost((void **)&h_blurred_heatmap, ScaledHeatmapBytes);
 
-    cudaMallocHost((void **)&d_heatmap, HeatmapBytes);
+    
+    ///// INIT DATA SOM SKA LADDAS IN /////
+	for (int i = 0; i < agentSize; i++){
+		h_desX[i] = agents[i]->getDesiredX();
+		h_desY[i] = agents[i]->getDesiredY();
+	}
+    for(int i = 0; i < SIZE; i++){
+        for(int k = 0; k < SIZE; k++){
 
-    cudaMallocHost((void **)&d_scaled_heatmap, ScaledHeatmapBytes);
-    cudaMallocHost((void **)&d_blurred_heatmap, ScaledHeatmapBytes);
+            h_heatmap[i*SIZE + k] = heatmap[i][k];
 
+        }
+    }
+
+    for(int i = 0; i < SCALED_SIZE; i++){       ///Detta borde inte vara nödvändigt, men safe:ar.
+        for(int k = 0; k < SCALED_SIZE; k++){
+    
+            h_scaled_heatmap[i*SCALED_SIZE + k] = 0;
+            h_blurred_heatmap[i*SCALED_SIZE + k] = 0;
+        }
+    }
+    
+    std::cout << "\n init data : " << h_heatmap[440];
     cudaError_t err1 = cudaGetLastError();
     if ( err1 != cudaSuccess )
     {
        printf("CUDA Error in 'allocering av minne i device variabler': %s\n", cudaGetErrorString(err1));       
     }
-
+    cudaMalloc((void **)&d_desX, AgentBytes);
+    cudaMalloc((void **)&d_desY, AgentBytes);
+    cudaMalloc((void **)&d_heatmap, HeatmapBytes);
+    cudaMalloc((void **)&d_scaled_heatmap, ScaledHeatmapBytes);
+    cudaMalloc((void **)&d_blurred_heatmap, ScaledHeatmapBytes);
 
     // koppiering av värden från Host till Device
-	cudaMemcpy((void *)d_desX, (void *)h_desX, AgentBytes, cudaMemcpyHostToDevice);
-	cudaMemcpy((void *)d_desY, (void *)h_desY, AgentBytes, cudaMemcpyHostToDevice);
-
+    cudaMemcpy((void *)d_desX, (void *)h_desX, AgentBytes, cudaMemcpyHostToDevice);
+    cudaMemcpy((void *)d_desY, (void *)h_desY, AgentBytes, cudaMemcpyHostToDevice);
     cudaMemcpy((void *)d_heatmap, (void *)h_heatmap, HeatmapBytes, cudaMemcpyHostToDevice);
-
     cudaMemcpy((void *)d_scaled_heatmap, (void *)h_scaled_heatmap, ScaledHeatmapBytes, cudaMemcpyHostToDevice);
     cudaMemcpy((void *)d_blurred_heatmap, (void *)h_blurred_heatmap, ScaledHeatmapBytes, cudaMemcpyHostToDevice);
-
     cudaError_t err2 = cudaGetLastError();
     if ( err2 != cudaSuccess )
     {
        printf("CUDA Error in 'koppiering av värden från Host till Device': %s\n", cudaGetErrorString(err2));       
     }
-
+    std::cout << "\n hej efter skick: " << h_heatmap[440];
     ///////////////////////////////////////
 
     ///// KALL AV KERNEL /////
@@ -184,7 +185,6 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     {
        printf("CUDA Error in 'KALL AV KERNEL': %s\n", cudaGetErrorString(err3));       
     }
-
     // koppiering av värden från Device till Host.  
     cudaMemcpy((void *)h_heatmap, (void *)d_heatmap, HeatmapBytes, cudaMemcpyDeviceToHost);
     cudaMemcpy((void *)h_scaled_heatmap, (void *)d_scaled_heatmap, ScaledHeatmapBytes, cudaMemcpyDeviceToHost);
@@ -195,7 +195,7 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     {
        printf("CUDA Error in 'koppiering av värden från Device till Host': %s\n", cudaGetErrorString(err4));       
     }
-
+    std::cout << "\n hej efter KERNEL : " << h_heatmap[440];
     ///////////////////////////////////////
 
     ///// UPPDATERING AV VÄRDEN I MODEL /////
@@ -205,15 +205,33 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     /// Temp lösning för att kolla så allt funkar.
     for(int i = 0; i < SIZE; i++){
         for(int k = 0; k < SIZE; k++){
-            heatmap[i][k] = h_heatmap[i][k];
+            heatmap[i][k] = h_heatmap[i*SIZE + k];
         }
     }
 
     for(int i = 0; i < SCALED_SIZE; i++){
         for(int k = 0; k < SCALED_SIZE; k++){
     
-            scaled_heatmap[i][k] = h_scaled_heatmap[i][k];
-            blurred_heatmap[i][k] = h_blurred_heatmap[i][k];
+            scaled_heatmap[i][k] = h_scaled_heatmap[i*SCALED_SIZE + k];
+            blurred_heatmap[i][k] = h_blurred_heatmap[i*SCALED_SIZE + k];
         }
     }
+    /*    CudaFree(d_desX);
+    CudaFree(d_desY);
+    CudaFree(d_heatmap);
+    CudaFree(d_scaled_heatmap);
+    CudaFree(d_blurred_heatmap);
+    CudaFreeHost(h_desX);
+    CudaFreeHost(h_desY);
+    CudaFreeHost(h_heatmap);
+    CudaFreeHost(h_scaled_heatmap);
+    CudaFreeHost(h_blurred_heatmap);
+    
+    delete [] h_desX;
+    delete [] h_desY;
+    delete [] h_heatmap;
+    delete [] h_scaled_heatmap;
+    delete [] h_blurred_heatmap;
+    */
+    
 }
