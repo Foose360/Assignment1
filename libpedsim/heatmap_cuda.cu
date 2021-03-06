@@ -57,11 +57,15 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
 			{
 				for (int cellX = 0; cellX < CELLSIZE; cellX++)
 				{
-				  d_scaled_heatmap[(y * CELLSIZE + cellY) + x * CELLSIZE + cellX] = value;
+				  d_scaled_heatmap[SCALED_SIZE*(y * CELLSIZE + cellY) + x * CELLSIZE + cellX] = value;
 				}
 			}
 		}
 	}
+# if __CUDA_ARCH__>=200
+	printf("%d heatmap \n", d_heatmap[1025]);
+	printf("%d scaled \n", d_scaled_heatmap[25605]);
+#endif 
 
     }
 		
@@ -81,23 +85,23 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
 	// Apply gaussian blurfilter
 	if (id == 0) {
 	for (int i = 2; i < CELLSIZE - 2; i++)
-	{
-		for (int j = 2; j < SCALED_SIZE - 2; j++)
-		{
-			int sum = 0;
-			for (int k = -2; k < 3; k++)
-			{
-				for (int l = -2; l < 3; l++)
-				{
-				  sum +=  w[2 + k][2 + l] * d_scaled_heatmap[SCALED_SIZE*(i + k) + j + l];
-				}
-			}
-			int value = sum / WEIGHTSUM;
-			d_blurred_heatmap[i*SCALED_SIZE + j] = 0x00FF0000 | value << 24;
-		}
+	  {
+	    for (int j = 2; j < SCALED_SIZE - 2; j++)
+	      {
+		int sum = 0;
+		for (int k = -2; k < 3; k++)
+		  {
+		    for (int l = -2; l < 3; l++)
+		      {
+			sum +=  w[2 + k][2 + l] * d_scaled_heatmap[i + k + SCALED_SIZE*(j + l)];
+		      }
+		  }
+		int value = sum / WEIGHTSUM;
+		d_blurred_heatmap[i*SCALED_SIZE + j] = 0x00FF0000 | value << 24;
+	      }
+	  }
 	}
-	}
-
+	
     __syncthreads(); // Notera denna. Kanske inte behövlig.
 
 }
@@ -155,8 +159,7 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     }
 
     for(int i = 0; i < SCALED_SIZE; i++){       ///Detta borde inte vara nödvändigt, men safe:ar.
-        for(int k = 0; k < SCALED_SIZE; k++){
-    
+        for(int k = 0; k < SCALED_SIZE; k++){    
             h_scaled_heatmap[i*SCALED_SIZE + k] = 0;
             h_blurred_heatmap[i*SCALED_SIZE + k] = 0;
         }
@@ -220,20 +223,20 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     for(int i = 0; i < SCALED_SIZE; i++){
         for(int k = 0; k < SCALED_SIZE; k++){    
             scaled_heatmap[i][k] = h_scaled_heatmap[i*SCALED_SIZE + k];
-            blurred_heatmap[i][k] = h_blurred_heatmap[i*SCALED_SIZE + k];
+            blurred_heatmap[i][k] = h_blurred_heatmap[i*SCALED_SIZE + k];	    
 	}
     }
-    /*    CudaFree(d_desX);
-    CudaFree(d_desY);
-    CudaFree(d_heatmap);
-    CudaFree(d_scaled_heatmap);
-    CudaFree(d_blurred_heatmap);
-    CudaFreeHost(h_desX);
-    CudaFreeHost(h_desY);
-    CudaFreeHost(h_heatmap);
-    CudaFreeHost(h_scaled_heatmap);
-    CudaFreeHost(h_blurred_heatmap);
-    
+    cudaFree(d_desX);
+    cudaFree(d_desY);
+    cudaFree(d_heatmap);
+    cudaFree(d_scaled_heatmap);
+    cudaFree(d_blurred_heatmap);
+    cudaFreeHost(h_desX);
+    cudaFreeHost(h_desY);
+    cudaFreeHost(h_heatmap);
+    cudaFreeHost(h_scaled_heatmap);
+    cudaFreeHost(h_blurred_heatmap);
+    /*
     delete [] h_desX;
     delete [] h_desY;
     delete [] h_heatmap;

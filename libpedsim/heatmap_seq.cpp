@@ -182,6 +182,8 @@ void Ped::Model::updateHeatmapSeq()
 			}
 		}
 	}
+	std::cout << "\n heatmap:  " << heatmap[1][1];
+	std::cout << "\n scaled: " << scaled_heatmap[5][5];
 
 	// Weights for blur filter
 	const int w[5][5] = {
