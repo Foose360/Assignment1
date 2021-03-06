@@ -226,7 +226,7 @@ void Ped::Model::tick_serial()
 		this->vagents->getNextDestination(&agents, i);
 		this->vagents->computeNextDesiredPosition(&agents, i);
 	}
-	cuda_updateHeatmapSeq();
+	updateHeatmapSeq();
 	
 	
     for(int k = 0; k < agents.size()-restProducts; k++){
@@ -246,9 +246,9 @@ void Ped::Model::tick_serial()
 	}
 	
 	// Uppsammling av CPU/GPU
-	std::cout << "\n blurred: " << blurred_heatmap[2][2];
-	std::cout << "\n scaled: " << scaled_heatmap[2][2];
-	std::cout << "\n heatmap: " << heatmap[2][2];
+	//std::cout << "\n blurred: " << blurred_heatmap[2][2];
+	//std::cout << "\n scaled: " << scaled_heatmap[2][2];
+	//std::cout << "\n heatmap: " << heatmap[2][2];
 	agentQueue.clear();
 }
 

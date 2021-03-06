@@ -182,8 +182,17 @@ void Ped::Model::updateHeatmapSeq()
 			}
 		}
 	}
-	std::cout << "\n heatmap:  " << heatmap[1][1];
-	std::cout << "\n scaled: " << scaled_heatmap[5][5];
+	std::cout << "\n heatmap:  " << heatmap[87][14];
+	std::cout << "\n scaled: " << scaled_heatmap[435][70];
+
+	//for(int i = 0; i < SIZE; i++){
+	//	for(int k = 0; k < SIZE; k++){
+	//		if(heatmap[i][k] != 0){
+	//			std::cout << "\n 1:  " << i;
+	//			std::cout << "\n 2:  " << k;
+	//		}
+	//	}
+	//}
 
 	// Weights for blur filter
 	const int w[5][5] = {

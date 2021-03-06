@@ -63,8 +63,8 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
 		}
 	}
 # if __CUDA_ARCH__>=200
-	printf("%d heatmap \n", d_heatmap[1025]);
-	printf("%d scaled \n", d_scaled_heatmap[25605]);
+	printf("%d heatmap \n", d_heatmap[524800]);
+	printf("%d scaled \n", d_scaled_heatmap[13109760]);
 #endif 
 
     }
@@ -84,20 +84,20 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
 #define WEIGHTSUM 273
 	// Apply gaussian blurfilter
 	if (id == 0) {
-	for (int i = 2; i < CELLSIZE - 2; i++)
+	for (int i = 2; i < SCALED_SIZE - 2; i++)
 	  {
 	    for (int j = 2; j < SCALED_SIZE - 2; j++)
 	      {
-		int sum = 0;
-		for (int k = -2; k < 3; k++)
-		  {
-		    for (int l = -2; l < 3; l++)
+		      int sum = 0;
+		      for (int k = -2; k < 3; k++)
 		      {
-			sum +=  w[2 + k][2 + l] * d_scaled_heatmap[i + k + SCALED_SIZE*(j + l)];
+		        for (int l = -2; l < 3; l++)
+		        {
+			        sum +=  w[2 + k][2 + l] * d_scaled_heatmap[SCALED_SIZE*(i + k) + (j + l)];
+		        }
 		      }
-		  }
-		int value = sum / WEIGHTSUM;
-		d_blurred_heatmap[i*SCALED_SIZE + j] = 0x00FF0000 | value << 24;
+		      int value = sum / WEIGHTSUM;
+		      d_blurred_heatmap[i*SCALED_SIZE + j] = 0x00FF0000 | value << 24;
 	      }
 	  }
 	}
