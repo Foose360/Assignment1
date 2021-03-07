@@ -64,10 +64,9 @@ __device__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
     __syncthreads();
 
 	// Count how many agents want to go to each location
-    for (int i = id; i < agentSize; i+1024) {
-      if(id <= agentSize){
-        int x = d_desX[id];
-	int y = d_desY[id];
+    for (int i = id; i < agentSize; i = i + 1024) {
+        int x = d_desX[i];
+		int y = d_desY[i];
 
 	if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
 	  {
@@ -78,7 +77,6 @@ __device__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
 	  atomicAdd(&d_heatmap[y*SIZE + x],40);
 	}
       }
-    }
     
     __syncthreads();
 }
