@@ -67,9 +67,7 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
 
 #define WEIGHTSUM 273
 	// Apply gaussian blurfilter
-	if (id == 0) {
-	for (int i = 2; i < SCALED_SIZE - 2; i++)
-	  {
+    if(id >= 2 && id < SCALED_SIZE - 2) {
 	    for (int j = 2; j < SCALED_SIZE - 2; j++)
 	      {
 		      int sum = 0;
@@ -77,14 +75,34 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
 		      {
 		        for (int l = -2; l < 3; l++)
 		        {
-			        sum +=  w[2 + k][2 + l] * d_scaled_heatmap[SCALED_SIZE*(i + k) + (j + l)];
+			        sum +=  w[2 + k][2 + l] * d_scaled_heatmap[SCALED_SIZE*(id + k) + (j + l)];
 		        }
 		      }
 		      int value = sum / WEIGHTSUM;
-		      d_blurred_heatmap[i*SCALED_SIZE + j] = 0x00FF0000 | value << 24;
+		      d_blurred_heatmap[id*SCALED_SIZE + j] = 0x00FF0000 | value << 24;
+	      }
+	  }
+
+  /*
+#define WEIGHTSUM 273
+	// Apply gaussian blurfilter
+	if (id >= 2 && id < SCALED_SIZE - 2) {
+	    for (int j = 2; j < SCALED_SIZE - 2; j++)
+	      {
+		      int sum = 0;
+		      for (int k = -2; k < 3; k++)
+		      {
+		        for (int l = -2; l < 3; l++)
+		        {
+			        sum +=  w[2 + k][2 + l] * d_scaled_heatmap[SCALED_SIZE*(id + k) + (j + l)];
+		        }
+		      }
+		      int value = sum / WEIGHTSUM;
+		      d_blurred_heatmap[id*SCALED_SIZE + j] = 0x00FF0000 | value << 24;
 	      }
 	  }
 	}
+  */
 	
     __syncthreads(); // Notera denna. Kanske inte behövlig.
 
