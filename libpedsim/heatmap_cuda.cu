@@ -33,17 +33,13 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
 		}
     }
 
-
-	for (int x = 0; x < SIZE; x++)
-	{
-		d_heatmap[id*SIZE + x] = d_heatmap[id*SIZE + x] < 255 ? d_heatmap[id*SIZE + x] : 255;
-	}
-
+    __syncthreads();
 
     // Scale the data for visual representation
     for (int x = 0; x < SIZE; x++)
       {
-	int value = d_heatmap[id*SIZE + x];
+        d_heatmap[id*SIZE + x] = d_heatmap[id*SIZE + x] < 255 ? d_heatmap[id*SIZE + x] : 255;
+	      int value = d_heatmap[id*SIZE + x];
 	
 	for (int cellY = 0; cellY < CELLSIZE; cellY++)
 	  {
