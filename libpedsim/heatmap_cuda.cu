@@ -7,8 +7,9 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
+
 // Updates the heatmap according to the agent positions
-__global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_scaled_heatmap, int *d_blurred_heatmap, size_t agentSize)
+__device__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_scaled_heatmap, int *d_blurred_heatmap, size_t agentSize)
 {
     int id = threadIdx.x;
 
@@ -52,8 +53,14 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
       }
 	        
     __syncthreads();
-    
+}
+__device__ void apply_gaussian(int *d_scaled_heatmap, int *d_blurred_heatmap)
+{
+  __shared__ int s_scaled_heatmap[32 * 32];
+  //__shared__ int s_blurred_heatmap[32 * 32];
 	// Weights for blur filter
+  int row = blockIdx.y * blockDim.y + threadIdx.y; //(blockID * 32 + threadID) => [0,1,2,3,4,5,6,7..., 127] [128, 129,...,n]
+  int col = blockIdx.x * blockDim.x + threadIdx.x; //
 	const int w[5][5] = {
 		{ 1, 4, 7, 4, 1 },
 		{ 4, 16, 26, 16, 4 },
@@ -61,40 +68,66 @@ __global__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
 		{ 4, 16, 26, 16, 4 },
 		{ 1, 4, 7, 4, 1 }
 	};
-
+	////////////////////////////////////
+	//INIT SHARED HEATMAP /////////////
+	///////////////////////////////////
+	s_scaled_heatmap[threadIdx.y * 32 + threadIdx.x] = d_scaled_heatmap[row * SCALED_SIZE + col];
+	__syncthreads();
 #define WEIGHTSUM 273
 	// Apply gaussian blurfilter
-    if(id >= 2 && id < SCALED_SIZE - 2) {
-	    for (int j = 2; j < SCALED_SIZE - 2; j++)
+	if (row >= 2 && row + 5 < SCALED_SIZE -2 && col >= 2 && col + 5 < SCALED_SIZE -2) {
+	  if((threadIdx.y >= 2 && threadIdx.y + 5 < blockDim.y - 2 && threadIdx.x >= 2 && threadIdx.x + 5 < blockDim.x - 2)) { //Se till att vi inte hamnar utanför index	    
+	    int sum = 0;
+	    for (int k = -2; k < 3; k++)
 	      {
-		      int sum = 0;
-		      for (int k = -2; k < 3; k++)
-		      {
-		        for (int l = -2; l < 3; l++)
-		        {
-			        sum +=  w[2 + k][2 + l] * d_scaled_heatmap[SCALED_SIZE*(id + k) + (j + l)];
-		        }
-		      }
-		      int value = sum / WEIGHTSUM;
-		      d_blurred_heatmap[id*SCALED_SIZE + j] = 0x00FF0000 | value << 24;
+		for (int l = -2; l < 3; l++)
+		  {
+		    sum +=  w[2 + k][2 + l] * s_scaled_heatmap[blockDim.x * (threadIdx.y + k) + (threadIdx.x + l)];
+		  }
 	      }
+	    int value = sum / WEIGHTSUM;
+	    d_blurred_heatmap[row * SCALED_SIZE + col] = 0x00FF0000 | value << 24;
+	    
 	  }
-	
-    __syncthreads(); // Notera denna. Kanske inte behövlig.
-
+	  else
+	    { //Fetch from d_scaled_heatmap - this means we hit outside designated tile
+	    int sum = 0;
+	    for (int k = -2; k < 3; k++)
+	      {
+		for (int l = -2; l < 3; l++)
+		  {
+		    sum +=  w[2 + k][2 + l] * d_scaled_heatmap[SCALED_SIZE * (row + k) + (col + l)];
+		  }
+	      }
+	    int value = sum / WEIGHTSUM;
+	    d_blurred_heatmap[row * SCALED_SIZE + col] = 0x00FF0000 | value << 24;	    
+	  }
+	  
+	} 
+	__syncthreads(); // Notera denna. Kanske inte behövlig.
 }
+
+
+__global__ void kernelA(int *d_desX, int *d_desY, int *d_heatmap, int *d_scaled_heatmap, int *d_blurred_heatmap, size_t agentSize) {
+  cuda_update(d_desX, d_desY, d_heatmap, d_scaled_heatmap, d_blurred_heatmap, agentSize);
+}
+
+__global__ void kernelB(int *d_scaled_heatmap, int *d_blurred_heatmap) {
+  apply_gaussian(d_scaled_heatmap, d_blurred_heatmap);
+}
+
 
 void Ped::Model::cuda_updateHeatmapSeq(){
     ///// SKAPA DATA ATT LADDA IN /////
     size_t agentSize = agents.size();
-	int *h_desX = new int[agentSize];
-	int *h_desY = new int[agentSize];
+	int *h_desX;
+	int *h_desY;
 	int *d_desX;
 	int *d_desY;
 
-    int *h_heatmap = new int[SIZE * SIZE];
-    int *h_scaled_heatmap = new int[SCALED_SIZE * SCALED_SIZE];
-    int *h_blurred_heatmap = new int[SCALED_SIZE * SCALED_SIZE];
+    int *h_heatmap;
+    int *h_scaled_heatmap;
+    int *h_blurred_heatmap;
     int *d_heatmap;
     int *d_scaled_heatmap;
     int *d_blurred_heatmap;
@@ -111,18 +144,18 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     size_t ScaledHeatmapBytes = SCALED_SIZE * SCALED_SIZE * sizeof(int);
 
     // allocering av minne i device variabler
-    cudaMallocHost((void **)&h_desX, AgentBytes);
-    cudaMallocHost((void **)&h_desY, AgentBytes);
+    cudaMallocHost((void **)&h_heatmap, HeatmapBytes);
+    cudaMallocHost((void **)&h_scaled_heatmap, ScaledHeatmapBytes);
+    cudaMallocHost((void **)&h_blurred_heatmap, ScaledHeatmapBytes);
     cudaError_t errd = cudaGetLastError();
     if ( errd != cudaSuccess )
     {
        printf("CUDA Error in 'DEST!': %s\n", cudaGetErrorString(errd));       
     }
-    cudaMallocHost((void **)&h_heatmap, HeatmapBytes);
-    cudaMallocHost((void **)&h_scaled_heatmap, ScaledHeatmapBytes);
-    cudaMallocHost((void **)&h_blurred_heatmap, ScaledHeatmapBytes);
+    cudaMallocHost((void **)&h_desX, AgentBytes);
+    cudaMallocHost((void **)&h_desY, AgentBytes);
 
-    
+  
     ///// INIT DATA SOM SKA LADDAS IN /////
     for (int i = 0; i < agentSize; i++){
       h_desX[i] = agents[i]->getDesiredX();
@@ -136,13 +169,7 @@ void Ped::Model::cuda_updateHeatmapSeq(){
       }
     }
 
-    for(int i = 0; i < SCALED_SIZE; i++){       ///Detta borde inte vara nödvändigt, men safe:ar.
-        for(int k = 0; k < SCALED_SIZE; k++){    
-            h_scaled_heatmap[i*SCALED_SIZE + k] = 0;
-            h_blurred_heatmap[i*SCALED_SIZE + k] = 0;
-        }
-    }
-    
+
     cudaError_t err1 = cudaGetLastError();
     if ( err1 != cudaSuccess )
     {
@@ -177,8 +204,12 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     ///////////////////////////////////////
 
     ///// KALL AV KERNEL /////
-	cuda_update<<<1, 1024>>>(d_desX, d_desY, d_heatmap, d_scaled_heatmap, d_blurred_heatmap, agentSize);
-
+    //id = 0, 5, 10, 15, 20
+    dim3 dimBlock(32, 32); //32*32 threads per block = 1024
+    dim3 dimGrid(SCALED_SIZE/dimBlock.y, SCALED_SIZE/dimBlock.x); //5120/128 = 40*40 = 1600 thread blocks  
+    kernelA<<<1, 1024>>>(d_desX, d_desY, d_heatmap, d_scaled_heatmap, d_blurred_heatmap, agentSize);
+    
+    kernelB<<<dimGrid, dimBlock>>>(d_scaled_heatmap, d_blurred_heatmap);
     cudaError_t err3 = cudaGetLastError();
     if ( err3 != cudaSuccess )
     {
@@ -220,9 +251,9 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     cudaFree(d_blurred_heatmap);
     cudaFreeHost(h_desX);
     cudaFreeHost(h_desY);
-    cudaFreeHost(h_heatmap);
-    cudaFreeHost(h_scaled_heatmap);
-    cudaFreeHost(h_blurred_heatmap);
+    cudaFreeHost(heatmap);
+    cudaFreeHost(scaled_heatmap);
+    cudaFreeHost(blurred_heatmap);
 
     // PRINTA TID
     cudaEventRecord(stop, 0);
