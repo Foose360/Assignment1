@@ -212,7 +212,6 @@ void Ped::Model::tick_omp()
 	  }
 	}
 	this->agentQueue.clear();
-	std::cout << "CPU KLAR";
 }
 
 

@@ -64,37 +64,41 @@ __device__ void cuda_update(int *d_desX, int *d_desY, int *d_heatmap, int *d_sca
     __syncthreads();
 
 	// Count how many agents want to go to each location
-    if(id <= agentSize){
+    for (int i = id; i < agentSize; i+1024) {
+      if(id <= agentSize){
         int x = d_desX[id];
 	int y = d_desY[id];
 
-		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
-		{
+	if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
+	  {
 
-		}
-		else {
-		    // intensify heat for better color results TODO: AtomicAdd
-		  atomicAdd(&d_heatmap[y*SIZE + x],40);
-		}
+	  }
+	else {
+	  // intensify heat for better color results TODO: AtomicAdd
+	  atomicAdd(&d_heatmap[y*SIZE + x],40);
+	}
+      }
     }
-
+    
     __syncthreads();
+}
 
+__device__ void scale_map(int *d_heatmap, int *d_scaled_heatmap) {
     // Scale the data for visual representation
-    for (int x = 0; x < SIZE; x++)
-      {
-        d_heatmap[id*SIZE + x] = d_heatmap[id*SIZE + x] < 255 ? d_heatmap[id*SIZE + x] : 255;
-	      int value = d_heatmap[id*SIZE + x];
+
+  int row = blockIdx.y * blockDim.y + threadIdx.y; //   32x32
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
+  
+        d_heatmap[row*SIZE + col] = d_heatmap[row*SIZE + col] < 255 ? d_heatmap[row*SIZE + col] : 255;
+	      int value = d_heatmap[row*SIZE + col];
 	
 	for (int cellY = 0; cellY < CELLSIZE; cellY++)
 	  {
 	    for (int cellX = 0; cellX < CELLSIZE; cellX++)
 	      {
-		d_scaled_heatmap[SCALED_SIZE*(id * CELLSIZE + cellY) + x * CELLSIZE + cellX] = value;
+		d_scaled_heatmap[SCALED_SIZE*(row * CELLSIZE + cellY) + col * CELLSIZE + cellX] = value;
 	      }
-	  }
-      }
-	        
+	  }	        
     __syncthreads();
 }
 __device__ void apply_gaussian(int *d_scaled_heatmap, int *d_blurred_heatmap)
@@ -153,7 +157,11 @@ __global__ void kernelA(int *d_desX, int *d_desY, int *d_heatmap, int *d_scaled_
   cuda_update(d_desX, d_desY, d_heatmap, d_scaled_heatmap, d_blurred_heatmap, agentSize);
 }
 
-__global__ void kernelB(int *d_scaled_heatmap, int *d_blurred_heatmap) {
+__global__ void kernelB(int *d_heatmap, int *d_scaled_heatmap) {
+  scale_map(d_heatmap, d_scaled_heatmap);
+}
+
+__global__ void kernelC(int *d_scaled_heatmap, int *d_blurred_heatmap) {
   apply_gaussian(d_scaled_heatmap, d_blurred_heatmap);
 }
 
@@ -187,10 +195,13 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     ///// KALL AV KERNEL /////
     //id = 0, 5, 10, 15, 20
     dim3 dimBlock(32, 32); //32*32 threads per block = 1024
-    dim3 dimGrid(SCALED_SIZE/dimBlock.y, SCALED_SIZE/dimBlock.x); //5120/128 = 40*40 = 1600 thread blocks  
+    dim3 dimGrid(SCALED_SIZE/dimBlock.y, SCALED_SIZE/dimBlock.x); //5120/128 = 40*40 = 1600 thread blocks
+    dim3 dimGridB(SIZE/dimBlock.y, SIZE/dimBlock.x);
     kernelA<<<1, 1024>>>(d_desX, d_desY, d_heatmap, d_scaled_heatmap, d_blurred_heatmap, agentSize);
+
+    kernelB<<<dimGridB, dimBlock>>>(d_heatmap, d_scaled_heatmap);
     
-    kernelB<<<dimGrid, dimBlock>>>(d_scaled_heatmap, d_blurred_heatmap);
+    kernelC<<<dimGrid, dimBlock>>>(d_scaled_heatmap, d_blurred_heatmap);
 
     // koppiering av värden från Device till Host.  
     cudaMemcpyAsync((void *)*heatmap, (void *)d_heatmap, HeatmapBytes, cudaMemcpyDeviceToHost);

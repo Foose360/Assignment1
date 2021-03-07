@@ -30,8 +30,8 @@ void Ped::Model::apply_decay(int *d_desX, int *d_desY){
 	{
 		for (int y = 0; y < SIZE; y++)
 		{
-			// heat fades
-			heatmap[y][x] = (int)round(heatmap[y][x] * 0.80);
+		  // heat fades
+		  heatmap[y][x] = (int)round(heatmap[y][x] * 0.80);
 		}
 	}
 }
