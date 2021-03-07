@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <cmath>
+#include <cuda.h>
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
@@ -153,6 +154,15 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     cudaMalloc((void **)&d_scaled_heatmap, ScaledHeatmapBytes);
     cudaMalloc((void **)&d_blurred_heatmap, ScaledHeatmapBytes);
 
+    // Record event för tidsgranskning
+    float gpu_time;
+
+    cudaEvent_t start;
+    cudaEvent_t stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start, 0);
+
     // koppiering av värden från Host till Device
     cudaMemcpy((void *)d_desX, (void *)h_desX, AgentBytes, cudaMemcpyHostToDevice);
     cudaMemcpy((void *)d_desY, (void *)h_desY, AgentBytes, cudaMemcpyHostToDevice);
@@ -213,6 +223,22 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     cudaFreeHost(h_heatmap);
     cudaFreeHost(h_scaled_heatmap);
     cudaFreeHost(h_blurred_heatmap);
+
+    // PRINTA TID
+    cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&gpu_time, start, stop);
+
+    cudaEventElapsedTime(&gpu_time, start, stop);
+    std::cout << "\n gpu_time:  " << gpu_time;
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+
+
+
+
+
+
     /*
     delete [] h_desX;
     delete [] h_desY;
