@@ -229,7 +229,6 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&gpu_time, start, stop);
 
-    cudaEventElapsedTime(&gpu_time, start, stop);
     std::cout << "\n gpu_time:  " << gpu_time;
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
