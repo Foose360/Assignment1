@@ -74,8 +74,20 @@ namespace Ped{
 		// The agents in this scenario
 		std::vector<Tagent*> agents;
 
-	private:
+	  int *h_desX;
+	  int *h_desY;
+	  int *h_heatmap;
+	  int *h_scaled_heatmap;
+	  int *h_blurred_heatmap;
 
+	  int *d_desX;
+	  int *d_desY;	
+	  int *d_heatmap;
+	  int *d_scaled_heatmap;
+	  int *d_blurred_heatmap;
+
+	private:
+	  
 		// Denotes which implementation (sequential, parallel implementations..)
 		// should be used for calculating the desired positions of
 		// agents (Assignment 1)

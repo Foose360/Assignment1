@@ -200,18 +200,19 @@ void Ped::Model::tick_omp()
 		this->vagents->getNextDestination(&agents, i);
 		this->vagents->computeNextDesiredPosition(&agents, i);
 	}
-#pragma omp barrier   
+#pragma omp barrier	
+	cuda_updateHeatmapSeq();
 	delegateTasks();
-#pragma omp barrier
-	#pragma omp critical
+#pragma omp critical
 	for (int k = 0; k < agentQueue.size(); k++) {		
-		int index = agentQueue[k];
-		if (move((agents)[index], false)) { //Serialized				
-			this->vagents->x[index] = this->agents[index]->getX();
-			this->vagents->x[index] = this->agents[index]->getX();
-		}
+	  int index = agentQueue[k];
+	  if (move((agents)[index], false)) { //Serialized				
+	    this->vagents->x[index] = this->agents[index]->getX();
+	    this->vagents->x[index] = this->agents[index]->getX();
+	  }
 	}
 	this->agentQueue.clear();
+	std::cout << "CPU KLAR";
 }
 
 

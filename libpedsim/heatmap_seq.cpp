@@ -12,29 +12,12 @@ using namespace std;
 
 // Memory leak check with msvc++
 #include <stdlib.h>
+#include <cuda.h>
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
 
 // Sets up the heatmap
-void Ped::Model::setupHeatmapSeq()
-{
-	int *hm = (int*)calloc(SIZE*SIZE, sizeof(int));
-	int *shm = (int*)malloc(SCALED_SIZE*SCALED_SIZE*sizeof(int));
-	int *bhm = (int*)malloc(SCALED_SIZE*SCALED_SIZE*sizeof(int));
 
-	heatmap = (int**)malloc(SIZE*sizeof(int*));
-
-	scaled_heatmap = (int**)malloc(SCALED_SIZE*sizeof(int*));
-	blurred_heatmap = (int**)malloc(SCALED_SIZE*sizeof(int*));
-
-	for (int i = 0; i < SIZE; i++)
-	{
-		heatmap[i] = hm + SIZE*i;
-	}
-	for (int i = 0; i < SCALED_SIZE; i++)
-	{
-		scaled_heatmap[i] = shm + SCALED_SIZE*i;
-		blurred_heatmap[i] = bhm + SCALED_SIZE*i;
-	}
-}
 
 //1: Apply decaying Heat value to every square.
 //2: Atomic_add new Heat values for every agent. (1, whole_map)
