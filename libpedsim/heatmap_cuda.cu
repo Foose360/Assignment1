@@ -149,12 +149,6 @@ __device__ void apply_gaussian(int *d_scaled_heatmap, int *d_blurred_heatmap)
 	  }
 	  
 	}
-	if (threadIdx.x == 0) {
-# if __CUDA_ARCH__>=200
-    printf("hello from GPU \n");
-
-#endif
-	}
 }
 
 

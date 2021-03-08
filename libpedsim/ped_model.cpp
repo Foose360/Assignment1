@@ -201,8 +201,17 @@ void Ped::Model::tick_omp()
 		this->vagents->computeNextDesiredPosition(&agents, i);
 	}
 #pragma omp barrier	
-	cuda_updateHeatmapSeq();
-	delegateTasks();
+#pragma omp parallel
+{	
+	#pragma omp single nowait
+	{
+		cuda_updateHeatmapSeq();
+	}
+		#pragma omp single nowait
+	{
+		delegateTasks();
+	}
+}
 #pragma omp critical
 	for (int k = 0; k < agentQueue.size(); k++) {		
 	  int index = agentQueue[k];
@@ -226,9 +235,12 @@ void Ped::Model::tick_serial()
 		this->vagents->getNextDestination(&agents, i);
 		this->vagents->computeNextDesiredPosition(&agents, i);
 	}
+	#pragma omp parallel
+	{
+	#pragma omp single nowait
+	{
 	cuda_updateHeatmapSeq();
-	std::cout << "hej från CPU";
-	
+	}
 	
     for(int k = 0; k < agents.size()-restProducts; k++){
 		if (move(agents[k], false)) {
@@ -251,6 +263,7 @@ void Ped::Model::tick_serial()
 	//std::cout << "\n scaled: " << scaled_heatmap[2][2];
 	//std::cout << "\n heatmap: " << heatmap[2][2];
 	agentQueue.clear();
+	}
 }
 
 static void tick_offset(int id, int step, std::vector<Ped::Tagent*> *agents, Ped::Vagent *vagents)
