@@ -29,15 +29,16 @@ void Ped::Model::setupHeatmapSeq()
 	    // allocering av minne i device variabler
 	cudaMallocHost((void **)&h_desX, AgentBytes);
 	cudaMallocHost((void **)&h_desY, AgentBytes);
-	cudaMallocHost((void **)&h_heatmap, HeatmapBytes);
-	cudaMallocHost((void **)&h_scaled_heatmap, ScaledHeatmapBytes);
-	cudaMallocHost((void **)&h_blurred_heatmap, ScaledHeatmapBytes);
+	//cudaMallocHost((void **)&h_heatmap, HeatmapBytes);
+	//cudaMallocHost((void **)&h_scaled_heatmap, ScaledHeatmapBytes);
+	//cudaMallocHost((void **)&h_blurred_heatmap, ScaledHeatmapBytes);
 
 	cudaMalloc((void **)&d_desX, AgentBytes);
 	cudaMalloc((void **)&d_desY, AgentBytes);
 	cudaMalloc((void **)&d_heatmap, HeatmapBytes);
 	cudaMalloc((void **)&d_scaled_heatmap, ScaledHeatmapBytes);
 	cudaMalloc((void **)&d_blurred_heatmap, ScaledHeatmapBytes);
+	cudaMemcpyAsync((void *)d_heatmap, (void *)*heatmap, HeatmapBytes, cudaMemcpyHostToDevice);
 
 	
 	for (int i = 0; i < SIZE; i++)
@@ -147,7 +148,13 @@ __device__ void apply_gaussian(int *d_scaled_heatmap, int *d_blurred_heatmap)
 	    d_blurred_heatmap[row * SCALED_SIZE + col] = 0x00FF0000 | value << 24;
 	  }
 	  
-	} 
+	}
+	if (threadIdx.x == 0) {
+# if __CUDA_ARCH__>=200
+    printf("hello from GPU \n");
+
+#endif
+	}
 }
 
 
@@ -170,10 +177,8 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     ///////////////////////////////////////
     ///////////////////////////////////////
     ///// INLADDNING AV DATA /////
-
     // storlekarna att allokera
-    size_t AgentBytes =  sizeof(int) * agentSize;
-    size_t HeatmapBytes = SIZE * SIZE * sizeof(int);
+    size_t AgentBytes =  sizeof(int) * agentSize;  
     size_t ScaledHeatmapBytes = SCALED_SIZE * SCALED_SIZE * sizeof(int);
   
     ///// INIT DATA SOM SKA LADDAS IN /////
@@ -185,7 +190,7 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     // koppiering av värden från Host till Device
     cudaMemcpyAsync((void *)d_desX, (void *)h_desX, AgentBytes, cudaMemcpyHostToDevice);
     cudaMemcpyAsync((void *)d_desY, (void *)h_desY, AgentBytes, cudaMemcpyHostToDevice);
-    cudaMemcpyAsync((void *)d_heatmap, (void *)*heatmap, HeatmapBytes, cudaMemcpyHostToDevice);
+    
     //    cudaMemcpyAsync((void *)d_scaled_heatmap, (void *)*scaled_heatmap, ScaledHeatmapBytes, cudaMemcpyHostToDevice);
     //cudaMemcpyAsync((void *)d_blurred_heatmap, (void *)*blurred_heatmap, ScaledHeatmapBytes, cudaMemcpyHostToDevice);
     ///////////////////////////////////////
@@ -202,8 +207,8 @@ void Ped::Model::cuda_updateHeatmapSeq(){
     kernelC<<<dimGrid, dimBlock>>>(d_scaled_heatmap, d_blurred_heatmap);
 
     // koppiering av värden från Device till Host.  
-    cudaMemcpyAsync((void *)*heatmap, (void *)d_heatmap, HeatmapBytes, cudaMemcpyDeviceToHost);
-    cudaMemcpyAsync((void *)*scaled_heatmap, (void *)d_scaled_heatmap, ScaledHeatmapBytes, cudaMemcpyDeviceToHost);
+    //    cudaMemcpyAsync((void *)*heatmap, (void *)d_heatmap, HeatmapBytes, cudaMemcpyDeviceToHost);
+    //cudaMemcpyAsync((void *)*scaled_heatmap, (void *)d_scaled_heatmap, ScaledHeatmapBytes, cudaMemcpyDeviceToHost);
     cudaMemcpyAsync((void *)*blurred_heatmap, (void *)d_blurred_heatmap, ScaledHeatmapBytes, cudaMemcpyDeviceToHost);
  
 }
