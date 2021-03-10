@@ -64,6 +64,7 @@ int main(int argc, char*argv[]) {
 				long ret;
 				ret = strtol(argv[i+1], &ptr, 10);
 				cores = ret;
+				i = i + 1;
 			}
 			else
 			{
@@ -84,8 +85,7 @@ int main(int argc, char*argv[]) {
 		Ped::Model model;
 		ParseScenario parser(scenefile);
 		model.setup(parser.getAgents(), parser.getWaypoints(), Ped::SEQ);
-		Ped::Vagent v(model.getAgents());
-		model.addVagent(&v);
+
 		// GUI related set ups
 		QApplication app(argc, argv);
 		MainWindow mainwindow(model);
@@ -113,7 +113,7 @@ int main(int argc, char*argv[]) {
 				// Simulation mode to use when profiling (without any GUI)
 				std::cout << "Running reference version...\n";
 				auto start = std::chrono::steady_clock::now();
-				simulation.runSimulationWithoutQt(maxNumberOfStepsToSimulate, tick_mode, cores);
+				simulation.runSimulationWithoutQt(maxNumberOfStepsToSimulate, 0, 1);
 				auto duration_seq = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::steady_clock::now() - start);
 				fps_seq = ((float)simulation.getTickCount()) / ((float)duration_seq.count())*1000.0;
 				cout << "Reference time: " << duration_seq.count() << " milliseconds, " << fps_seq << " Frames Per Second." << std::endl;
@@ -121,7 +121,7 @@ int main(int argc, char*argv[]) {
 
 			// Change this variable when testing different versions of your code. 
 			// May need modification or extension in later assignments depending on your implementations
-			/*Ped::IMPLEMENTATION implementation_to_test = Ped::SEQ;
+			Ped::IMPLEMENTATION implementation_to_test = Ped::SEQ;
 			{
 				Ped::Model model;
 				ParseScenario parser(scenefile);
@@ -137,8 +137,8 @@ int main(int argc, char*argv[]) {
 				fps_target = ((float)simulation.getTickCount()) / ((float)duration_target.count())*1000.0;
 				cout << "Target time: " << duration_target.count() << " milliseconds, " << fps_target << " Frames Per Second." << std::endl;
 			}
-			*/
-			//std::cout << "\n\nSpeedup: " << fps_target / fps_seq << std::endl;
+			
+			std::cout << "\n\nSpeedup: " << fps_target / fps_seq << std::endl;
 			
 			
 
@@ -147,6 +147,8 @@ int main(int argc, char*argv[]) {
 		else
 		{
 
+		        Ped::Vagent gv(model.getAgents());
+			model.addVagent(&gv);
 			PedSimulation simulation(model, mainwindow);
 
 			cout << "Demo setup complete, running ..." << endl;
