@@ -79,7 +79,8 @@ void Ped::Model::tick_threads(int cores)
 {
 	int i;
 	agents = this->getAgents();
-	int step = agents.size() / cores;
+	int restProducts = agents.size() % (4 * cores);
+	int step = (agents.size()-restProducts) / cores;
 	std::thread* t = new::std::thread[cores];
 	for (i = 0; i < cores; i++) {
 		t[i] = std::thread(tick_offset, i, step, agents);

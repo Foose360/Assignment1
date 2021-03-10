@@ -62,6 +62,7 @@ int main(int argc, char*argv[]) {
 				long ret;
 				ret = strtol(argv[i+1], &ptr, 10);
 				cores = ret;
+				i++;
 			}
 			else
 			{
@@ -108,7 +109,7 @@ int main(int argc, char*argv[]) {
 				// Simulation mode to use when profiling (without any GUI)
 				std::cout << "Running reference version...\n";
 				auto start = std::chrono::steady_clock::now();
-				simulation.runSimulationWithoutQt(maxNumberOfStepsToSimulate, tick_mode, cores);
+				simulation.runSimulationWithoutQt(maxNumberOfStepsToSimulate, 0, 1);
 				auto duration_seq = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::steady_clock::now() - start);
 				fps_seq = ((float)simulation.getTickCount()) / ((float)duration_seq.count())*1000.0;
 				cout << "Reference time: " << duration_seq.count() << " milliseconds, " << fps_seq << " Frames Per Second." << std::endl;
